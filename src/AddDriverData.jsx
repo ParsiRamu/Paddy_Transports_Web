@@ -764,11 +764,11 @@ function AddDriverData() {
               <div className="overflow-x-auto rounded-xl border border-emerald-100">
                 <table className="w-full min-w-[420px] border-collapse text-left text-sm">
                   <thead>
-                    <tr className="border-b border-emerald-100 bg-emerald-50/80 text-xs font-semibold uppercase tracking-wide text-emerald-900">
-                      <th className="px-3 py-2">#</th>
-                      <th className="px-3 py-2">Reason</th>
-                      <th className="px-3 py-2">Amount (₹)</th>
-                      <th className="w-24 px-3 py-2 text-center"> </th>
+                    <tr className="border-b border-[#245840] bg-[#2D6A4F] text-xs font-bold uppercase tracking-wider text-white">
+                      <th className="rounded-tl-xl border-r border-[#467C64] px-3 py-2">#</th>
+                      <th className="border-r border-[#467C64] px-3 py-2">Reason</th>
+                      <th className="border-r border-[#467C64] px-3 py-2">Amount (₹)</th>
+                      <th className="w-24 rounded-tr-xl px-3 py-2 text-center"> </th>
                     </tr>
                   </thead>
                   <tbody>

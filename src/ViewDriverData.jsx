@@ -7,6 +7,8 @@ import {
   getDoc,
   onSnapshot,
 } from "firebase/firestore";
+import * as XLSX from "xlsx";
+import { FileSpreadsheet } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import { db } from "./firebase";
 import { formatRupees } from "./formatRupees";
@@ -25,6 +27,17 @@ function formatKg(v) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 3,
   });
+}
+
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return "—";
+  const s = String(dateStr).trim();
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, yyyy, mm, dd] = match;
+    return `${dd}-${mm}-${yyyy}`;
+  }
+  return s;
 }
 
 function sumOtherNecessitiesAmounts(record) {
@@ -56,8 +69,8 @@ function OthersNestedTable({ items }) {
     <div className={OTHERS_SUB_WRAP}>
       <table className={OTHERS_SUB_TABLE}>
         <thead>
-          <tr className="border-b border-emerald-200 bg-emerald-50/90 text-[0.6rem] font-semibold uppercase tracking-wide text-emerald-900">
-            <th className="px-2 py-1.5 whitespace-nowrap">Reason</th>
+          <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.6rem] font-bold uppercase tracking-wider text-white">
+            <th className="border-r border-[#467C64] px-2 py-1.5 whitespace-nowrap">Reason</th>
             <th className="px-2 py-1.5 whitespace-nowrap text-right">Amt (₹)</th>
           </tr>
         </thead>
@@ -65,9 +78,9 @@ function OthersNestedTable({ items }) {
           {rows.map((o, idx) => (
             <tr
               key={idx}
-              className="border-b border-emerald-50 last:border-0 odd:bg-white even:bg-emerald-50/30"
+              className="border-b border-zinc-200/80 last:border-0 odd:bg-white even:bg-zinc-50/60"
             >
-              <td className="px-2 py-1.5 font-medium">
+              <td className="border-r border-zinc-200 px-2 py-1.5 font-medium">
                 {String(o?.reason ?? "").trim() || "—"}
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums font-semibold text-emerald-900">
@@ -78,7 +91,7 @@ function OthersNestedTable({ items }) {
         </tbody>
         <tfoot>
           <tr className="border-t border-emerald-200 bg-emerald-100/50 text-[0.65rem] font-semibold text-emerald-950">
-            <td className="px-2 py-1.5">Subtotal</td>
+            <td className="border-r border-zinc-200 px-2 py-1.5">Subtotal</td>
             <td className="px-2 py-1.5 text-right font-mono tabular-nums">
               {formatRupees(lineTotal)}
             </td>
@@ -192,7 +205,7 @@ function ViewDriverData() {
     setDeleteTarget({
       id: row.id,
       label:
-        `${String(row.driverName ?? "").trim() || "Driver"} · ${String(row.date ?? "").slice(0, 10) || row.id}`,
+        `${String(row.driverName ?? "").trim() || "Driver"} · ${formatDateDisplay(row.date) !== "—" ? formatDateDisplay(row.date) : row.id}`,
     });
     setDeletePassword("");
     setDeleteError(null);
@@ -232,16 +245,177 @@ function ViewDriverData() {
     }
   }, [deleteTarget, deletePassword]);
 
+  const handleExportExcel = useCallback(() => {
+    if (!filteredRows || filteredRows.length === 0) {
+      toast.info("No driver records available to export with the current filters.");
+      return;
+    }
+
+    const headers = [
+      "S.NO.",
+      "DATE",
+      "MILL",
+      "VEHICLE",
+      "DRIVER",
+      "MILL NET WT (KG)",
+      "ADVANCE AMT",
+      "LOADING AMT",
+      "OTHER NECESSITIES",
+    ];
+
+    const sheetData = [headers];
+    let sumAdvance = 0;
+    let sumLoading = 0;
+    let sumOthers = 0;
+    let sumNetWt = 0;
+
+    filteredRows.forEach((r, idx) => {
+      const sn =
+        r.serialNo != null && r.serialNo !== ""
+          ? Number.isFinite(Number(r.serialNo))
+            ? Number(r.serialNo)
+            : String(r.serialNo)
+          : idx + 1;
+      const adv = numOrZero(r.advanceAmt);
+      const loading = numOrZero(r.loadingAmt);
+      const others = sumOtherNecessitiesAmounts(r);
+      const netWt = numOrZero(r.millNetWtKgs);
+
+      sumAdvance += adv;
+      sumLoading += loading;
+      sumOthers += others;
+      sumNetWt += netWt;
+
+      sheetData.push([
+        sn,
+        formatDateDisplay(r.date) !== "—" ? formatDateDisplay(r.date) : "",
+        String(r.riceMillName ?? "").trim(),
+        String(r.vehicleNo ?? "").trim(),
+        String(r.driverName ?? "").trim(),
+        netWt,
+        adv,
+        loading,
+        others,
+      ]);
+    });
+
+    // Totals row at the bottom
+    const totalRowIndex = filteredRows.length + 1;
+    sheetData.push([
+      "Total (all rows above)",
+      "",
+      "",
+      "",
+      "",
+      sumNetWt,
+      sumAdvance,
+      sumLoading,
+      sumOthers,
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // Appropriate column widths
+    ws["!cols"] = [
+      { wch: 10 }, // S.NO.
+      { wch: 14 }, // DATE
+      { wch: 34 }, // MILL
+      { wch: 16 }, // VEHICLE
+      { wch: 24 }, // DRIVER
+      { wch: 20 }, // MILL NET WT (KG)
+      { wch: 16 }, // ADVANCE AMT
+      { wch: 16 }, // LOADING AMT
+      { wch: 20 }, // OTHER NECESSITIES
+    ];
+
+    // Merge A:E for totals row label
+    ws["!merges"] = [
+      { s: { r: totalRowIndex, c: 0 }, e: { r: totalRowIndex, c: 4 } },
+    ];
+
+    // Header styling
+    for (let c = 0; c < headers.length; c++) {
+      const ref = XLSX.utils.encode_cell({ r: 0, c });
+      if (ws[ref]) {
+        ws[ref].s = {
+          fill: { fgColor: { rgb: "2D6A4F" }, patternType: "solid" },
+          font: { name: "Calibri", sz: 11, bold: true, color: { rgb: "FFFFFF" } },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        };
+      }
+    }
+
+    // Data rows numeric formatting
+    for (let rIdx = 1; rIdx <= filteredRows.length; rIdx++) {
+      const wtRef = XLSX.utils.encode_cell({ r: rIdx, c: 5 });
+      const advRef = XLSX.utils.encode_cell({ r: rIdx, c: 6 });
+      const loadRef = XLSX.utils.encode_cell({ r: rIdx, c: 7 });
+      const othersRef = XLSX.utils.encode_cell({ r: rIdx, c: 8 });
+
+      if (ws[wtRef]) ws[wtRef].z = '#,##0.00';
+      if (ws[advRef]) ws[advRef].z = '"₹"#,##0.00';
+      if (ws[loadRef]) ws[loadRef].z = '"₹"#,##0.00';
+      if (ws[othersRef]) ws[othersRef].z = '"₹"#,##0.00';
+    }
+
+    // Totals row numeric formatting and styling
+    const totWtRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 5 });
+    const totAdvRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 6 });
+    const totLoadRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 7 });
+    const totOthersRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 8 });
+
+    if (ws[totWtRef]) ws[totWtRef].z = '#,##0.00';
+    if (ws[totAdvRef]) ws[totAdvRef].z = '"₹"#,##0.00';
+    if (ws[totLoadRef]) ws[totLoadRef].z = '"₹"#,##0.00';
+    if (ws[totOthersRef]) ws[totOthersRef].z = '"₹"#,##0.00';
+
+    for (let c = 0; c < headers.length; c++) {
+      const ref = XLSX.utils.encode_cell({ r: totalRowIndex, c });
+      if (ws[ref]) {
+        ws[ref].s = {
+          fill: { fgColor: { rgb: "D1E7DD" }, patternType: "solid" },
+          font: { name: "Calibri", sz: 11, bold: true, color: { rgb: "0F5132" } },
+          alignment: { horizontal: c <= 4 ? "right" : "right", vertical: "center" },
+        };
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Driver Data");
+
+    // Dynamic filename using current date: Driver_Data_YYYY-MM-DD.xlsx
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    const fileName = `Driver_Data_${yyyy}-${mm}-${dd}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    toast.success(`Exported ${filteredRows.length} driver record(s) to Excel.`);
+  }, [filteredRows]);
+
   return (
     <div className="p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-full space-y-6">
-        <div className="rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg sm:p-8">
-          <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-            View driver data
-          </h2>
-          <p className="mt-2 text-sm text-zinc-600">
-            Filter by mill or driver. Edit or delete (password required).
-          </p>
+        <div className="flex flex-col gap-4 rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
+              VIEW DRIVER DATA
+            </h2>
+            <p className="mt-2 text-sm text-zinc-600">
+              Filter by mill or driver. Edit or delete (password required).
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-700/30 bg-[#107C41] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/10 transition-all hover:bg-[#0b5a2f] hover:shadow-lg active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#107C41]/40 sm:self-center"
+            title="Export displayed driver records to Excel"
+            aria-label="Export displayed driver records to Excel"
+          >
+            <FileSpreadsheet className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>Export Excel</span>
+          </button>
         </div>
 
         {loadError && (
@@ -299,22 +473,38 @@ function ViewDriverData() {
         <div className="overflow-x-auto rounded-2xl border border-emerald-100/90 bg-white shadow-lg">
           <table className="w-full min-w-[1280px] border-collapse text-left text-xs text-zinc-800">
             <thead>
-              <tr className="border-b border-emerald-200 bg-emerald-50/90 text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-900">
-                <th className="px-2 py-3 whitespace-nowrap">#</th>
-                <th className="px-2 py-3 whitespace-nowrap">S. no.</th>
-                <th className="px-2 py-3 whitespace-nowrap">Date</th>
-                <th className="px-2 py-3 whitespace-nowrap">Mill</th>
-                <th className="px-2 py-3 whitespace-nowrap">Vehicle</th>
-                <th className="px-2 py-3 whitespace-nowrap">Driver</th>
-                <th className="px-2 py-3 whitespace-nowrap">Advance amt</th>
-                <th className="px-2 py-3 whitespace-nowrap">Loading amt</th>
-                <th className="min-w-[220px] px-2 py-3">
-                  Other necessities
+              <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">
+                <th className="rounded-tl-xl border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  #
                 </th>
-                <th className="px-2 py-3 whitespace-nowrap">
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  S. no.
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Date
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Mill
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Vehicle
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Driver
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
                   Mill net wt (kg)
                 </th>
-                <th className="px-2 py-3 text-center whitespace-nowrap">
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Advance amt
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Loading amt
+                </th>
+                <th className="min-w-[220px] border-r border-[#467C64] px-2 py-3">
+                  Other necessities
+                </th>
+                <th className="min-w-22 rounded-tr-xl px-2 py-3 text-center whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -333,39 +523,39 @@ function ViewDriverData() {
                 filteredRows.map((r, i) => (
                   <tr
                     key={r.id}
-                    className="border-b border-emerald-50 align-top odd:bg-white even:bg-emerald-50/20 hover:bg-emerald-50/40"
+                    className="border-b border-zinc-200/80 align-top odd:bg-white even:bg-zinc-50/50 hover:bg-emerald-50/40 transition-colors"
                   >
-                    <td className="px-2 py-3 font-medium text-zinc-500">
+                    <td className="border-r border-zinc-200 px-2 py-3 text-center font-medium text-zinc-500">
                       {i + 1}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-3 tabular-nums">
+                    <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 tabular-nums">
                       {r.serialNo != null && r.serialNo !== ""
                         ? r.serialNo
                         : "—"}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-3">
-                      {r.date ?? "—"}
+                    <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 tabular-nums">
+                      {formatDateDisplay(r.date)}
                     </td>
-                    <td className="max-w-40 px-2 py-3">
+                    <td className="border-r border-zinc-200 max-w-40 px-2 py-3">
                       {r.riceMillName ?? "—"}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-3">
+                    <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-medium">
                       {r.vehicleNo ?? "—"}
                     </td>
-                    <td className="max-w-36 px-2 py-3">
+                    <td className="border-r border-zinc-200 max-w-36 px-2 py-3 font-medium">
                       {r.driverName ?? "—"}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-3 font-semibold text-emerald-900">
+                    <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-mono tabular-nums">
+                      {formatKg(r.millNetWtKgs)}
+                    </td>
+                    <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-semibold text-emerald-900">
                       {formatRupees(r.advanceAmt)}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-3 font-semibold text-emerald-900">
+                    <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-semibold text-emerald-900">
                       {formatRupees(r.loadingAmt)}
                     </td>
-                    <td className="min-w-[220px] px-2 py-3 align-top">
+                    <td className="border-r border-zinc-200 min-w-[220px] px-2 py-3 align-top">
                       <OthersNestedTable items={r.otherNecessities} />
-                    </td>
-                    <td className="whitespace-nowrap px-2 py-3 font-mono tabular-nums">
-                      {formatKg(r.millNetWtKgs)}
                     </td>
                     <td className="whitespace-nowrap px-2 py-3">
                       <div className="flex items-center justify-end gap-1">
@@ -415,20 +605,20 @@ function ViewDriverData() {
             {driverFilterTotals && filteredRows.length > 0 && (
               <tfoot>
                 <tr className="border-t-2 border-emerald-300 bg-emerald-100/70 text-[0.7rem] font-semibold text-emerald-950">
-                  <td colSpan={6} className="bg-emerald-100/90 px-2 py-3 text-right">
+                  <td colSpan={6} className="border-r border-zinc-300 bg-emerald-100/90 px-2 py-3 text-right">
                     Total (all rows above)
                   </td>
-                  <td className="whitespace-nowrap px-2 py-3 text-emerald-900">
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-mono tabular-nums">
+                    {formatKg(driverFilterTotals.sumNetWt)}
+                  </td>
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 text-emerald-900">
                     {formatRupees(driverFilterTotals.sumAdvance)}
                   </td>
-                  <td className="whitespace-nowrap px-2 py-3 text-emerald-900">
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 text-emerald-900">
                     {formatRupees(driverFilterTotals.sumLoading)}
                   </td>
-                  <td className="whitespace-nowrap px-2 py-3 text-emerald-900">
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 text-emerald-900">
                     {formatRupees(driverFilterTotals.sumOthers)}
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-3 font-mono tabular-nums">
-                    {formatKg(driverFilterTotals.sumNetWt)}
                   </td>
                   <td className="px-2 py-3" />
                 </tr>

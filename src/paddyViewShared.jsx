@@ -242,16 +242,16 @@ export function FarmersNestedTable({
       <table className={FARMER_SUBTABLE_CLASS}>
         <FarmerSubtableColgroup />
         <thead>
-          <tr className="border-b border-emerald-200 bg-emerald-50/90 text-[0.6rem] font-semibold uppercase tracking-wide text-emerald-900">
-            <th className="px-2 py-2 whitespace-nowrap">Line</th>
-            <th className="px-2 py-2 whitespace-nowrap">Farmer</th>
-            <th className="px-2 py-2 whitespace-nowrap">Kayidha</th>
-            <th className="px-2 py-2 whitespace-nowrap">Mode (kg)</th>
-            <th className="px-2 py-2 whitespace-nowrap">Bags</th>
-            <th className="px-2 py-2 whitespace-nowrap">Above kg</th>
-            <th className="px-2 py-2 whitespace-nowrap">Bag value</th>
-            <th className="px-2 py-2 whitespace-nowrap">Total kg</th>
-            <th className="px-2 py-2 whitespace-nowrap">Net katas</th>
+          <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.6rem] font-bold uppercase tracking-wider text-white">
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Line</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Farmer</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Kayidha</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Mode (kg)</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Bags</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Above kg</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Bag value</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Total kg</th>
+            <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Net katas</th>
             <th className="px-2 py-2 whitespace-nowrap">Line ₹</th>
           </tr>
         </thead>
@@ -271,35 +271,35 @@ export function FarmersNestedTable({
               <tr
                 key={`${line}-${idx}`}
                 className={[
-                  "border-b border-emerald-50 last:border-0",
+                  "border-b border-zinc-200/80 last:border-0",
                   paid
                     ? "bg-zinc-200/70"
-                    : "odd:bg-white even:bg-emerald-50/30",
+                    : "odd:bg-white even:bg-zinc-50/60",
                 ].join(" ")}
               >
-                <td className="px-2 py-2 font-medium text-zinc-500">
+                <td className="border-r border-zinc-200 px-2 py-2 font-medium text-zinc-500">
                   {line}
                 </td>
-                <td className="px-2 py-2 font-medium">{name}</td>
-                <td className="truncate px-2 py-2 font-medium text-zinc-700">
+                <td className="border-r border-zinc-200 px-2 py-2 font-medium">{name}</td>
+                <td className="border-r border-zinc-200 truncate px-2 py-2 font-medium text-zinc-700">
                   {kayidhaLabel}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap">
+                <td className="border-r border-zinc-200 px-2 py-2 whitespace-nowrap">
                   {f.weightMode ?? "—"}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap">
+                <td className="border-r border-zinc-200 px-2 py-2 whitespace-nowrap">
                   {f.bags ?? "—"}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap">
+                <td className="border-r border-zinc-200 px-2 py-2 whitespace-nowrap">
                   {f.aboveKgs ?? "—"}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap">
+                <td className="border-r border-zinc-200 px-2 py-2 whitespace-nowrap">
                   {bv != null && Number.isFinite(bv) ? bv : "—"}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap font-mono">
+                <td className="border-r border-zinc-200 px-2 py-2 whitespace-nowrap font-mono">
                   {f.totalKg != null ? Number(f.totalKg).toFixed(2) : "—"}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap font-mono text-red-700">
+                <td className="border-r border-zinc-200 px-2 py-2 whitespace-nowrap font-mono text-red-700">
                   {f.netKatas != null ? Number(f.netKatas).toFixed(4) : "—"}
                 </td>
                 <td className="px-2 py-2 whitespace-nowrap font-medium text-emerald-800">

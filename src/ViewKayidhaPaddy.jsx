@@ -9,6 +9,17 @@ import {
   sumKayidhaPaddyKgsForJourney,
 } from "./paddyViewShared";
 
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return "—";
+  const s = String(dateStr).trim();
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, yyyy, mm, dd] = match;
+    return `${dd}-${mm}-${yyyy}`;
+  }
+  return s;
+}
+
 function ViewKayidhaPaddy() {
   const [journeys, setJourneys] = useState([]);
   const [workerMap, setWorkerMap] = useState({});
@@ -155,22 +166,40 @@ function ViewKayidhaPaddy() {
         <div className="overflow-x-auto rounded-2xl border border-emerald-100/90 bg-white shadow-lg shadow-emerald-900/5">
           <table className="w-full min-w-[1340px] border-collapse text-left text-xs text-zinc-800">
             <thead>
-              <tr className="border-b border-emerald-200 bg-emerald-50/90 text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-900">
-                <th className="sticky left-0 z-10 bg-emerald-50/95 px-2 py-3 shadow-[2px_0_0_0_rgb(167,243,208)]">
+              <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">
+                <th className="sticky left-0 z-10 rounded-tl-xl border-r border-[#467C64] bg-[#2D6A4F] px-2 py-3 text-white shadow-[1px_0_0_0_#467C64]">
                   #
                 </th>
-                <th className="px-2 py-3 whitespace-nowrap">Date</th>
-                <th className="px-2 py-3 whitespace-nowrap">Vehicle no.</th>
-                <th className="px-2 py-3 whitespace-nowrap">Rice mill</th>
-                <th className="px-2 py-3 whitespace-nowrap">Total bags</th>
-                <th className="px-2 py-3 whitespace-nowrap">Worker count</th>
-                <th className="min-w-40 px-2 py-3">Workers</th>
-                <th className="min-w-[720px] px-2 py-3">Farmers</th>
-                <th className="px-2 py-3 whitespace-nowrap">
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Date
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Vehicle no.
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Rice mill
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Total bags
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Worker count
+                </th>
+                <th className="min-w-40 border-r border-[#467C64] px-2 py-3">
+                  Workers
+                </th>
+                <th className="min-w-[720px] border-r border-[#467C64] px-2 py-3">
+                  Farmers
+                </th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
                   Kayidha paddy (kg)
                 </th>
-                <th className="px-2 py-3 whitespace-nowrap">Total net kata</th>
-                <th className="px-2 py-3 whitespace-nowrap">Grand total ₹</th>
+                <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Total net kata
+                </th>
+                <th className="rounded-tr-xl px-2 py-3 whitespace-nowrap">
+                  Grand total ₹
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -197,30 +226,30 @@ function ViewKayidhaPaddy() {
                   {filteredRows.map(({ j, lineKg }, i) => (
                     <tr
                       key={j.id}
-                      className="border-b border-emerald-50 align-top odd:bg-white even:bg-emerald-50/20 hover:bg-emerald-50/40"
+                      className="border-b border-zinc-200/80 align-top odd:bg-white even:bg-zinc-50/50 hover:bg-emerald-50/40 transition-colors"
                     >
-                      <td className="sticky left-0 z-1 bg-inherit px-2 py-3 font-medium text-zinc-500 shadow-[2px_0_0_0_rgb(236,253,245)]">
+                      <td className="sticky left-0 z-1 border-r border-zinc-200 bg-inherit px-2 py-3 font-medium text-zinc-500 shadow-[2px_0_0_0_rgb(236,253,245)]">
                         {i + 1}
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3">
-                        {j.date ?? "—"}
+                      <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 tabular-nums">
+                        {formatDateDisplay(j.date)}
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3">
+                      <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-medium">
                         {j.vehicleNo ?? "—"}
                       </td>
-                      <td className="min-w-32 px-2 py-3">
+                      <td className="border-r border-zinc-200 min-w-32 px-2 py-3">
                         {j.riceMillName ?? "—"}
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3">
+                      <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 tabular-nums">
                         {j.totalBagsCount != null ? j.totalBagsCount : "—"}
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3 font-medium tabular-nums">
+                      <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-medium tabular-nums">
                         {Array.isArray(j.workerIds) ? j.workerIds.length : 0}
                       </td>
-                      <td className="px-2 py-3 text-[0.7rem] leading-snug">
+                      <td className="border-r border-zinc-200 px-2 py-3 text-[0.7rem] leading-snug">
                         {workerNames(j.workerIds)}
                       </td>
-                      <td className="min-w-[720px] px-2 py-3 align-top">
+                      <td className="border-r border-zinc-200 min-w-[720px] px-2 py-3 align-top">
                         <FarmersNestedTable
                           farmers={j.farmers}
                           farmerMap={farmerMap}
@@ -228,10 +257,10 @@ function ViewKayidhaPaddy() {
                           filterKayidhaName=""
                         />
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3 font-mono font-semibold tabular-nums text-emerald-900">
+                      <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-mono font-semibold tabular-nums text-emerald-900">
                         {lineKg.toFixed(2)}
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3 font-mono font-semibold text-red-700">
+                      <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-mono font-semibold text-red-700">
                         {formatTotalNetKata(j.totalNetKatas)}
                       </td>
                       <td className="whitespace-nowrap px-2 py-3 font-semibold text-emerald-800">
@@ -244,14 +273,14 @@ function ViewKayidhaPaddy() {
                   <tr className="border-t-2 border-emerald-200 bg-emerald-50/90 align-top">
                     <td
                       colSpan={8}
-                      className="px-2 py-3 text-right text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-900"
+                      className="border-r border-zinc-300 px-2 py-3 text-right text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-900"
                     >
                       Total kg ({selectedKayidhaName})
                     </td>
-                    <td className="whitespace-nowrap px-2 py-3 font-mono text-sm font-bold tabular-nums text-emerald-900">
+                    <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-mono text-sm font-bold tabular-nums text-emerald-900">
                       {totalKayidhaKgs.toFixed(2)}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-3 text-zinc-300">
+                    <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 text-zinc-300">
                       —
                     </td>
                     <td className="whitespace-nowrap px-2 py-3 text-zinc-300">
