@@ -125,7 +125,7 @@ function ViewKayidhaPaddy() {
       <div className="mx-auto max-w-full space-y-6">
         <div className="rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg shadow-emerald-900/5 backdrop-blur-sm sm:p-8">
           <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-            Individual kayidha paddy
+            INDIVIDUAL KAYIDHA PADDY
           </h2>
           <p className="mt-2 text-sm text-zinc-600">
             Pick a kayidha from kayidha paddy lines to list every journey that

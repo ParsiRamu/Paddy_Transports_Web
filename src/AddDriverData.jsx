@@ -571,7 +571,7 @@ function AddDriverData() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-                {isEditMode ? "Edit driver data" : "Add driver data"}
+                {isEditMode ? "EDIT DRIVER DATA" : "ADD DRIVER DATA"}
               </h2>
               <p className="mt-2 text-sm text-zinc-600">
                 S. no. is assigned automatically when you save (not shown on

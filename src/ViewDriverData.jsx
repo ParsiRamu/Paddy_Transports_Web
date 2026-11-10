@@ -374,7 +374,12 @@ function ViewDriverData() {
       if (ws[ref]) {
         ws[ref].s = {
           fill: { fgColor: { rgb: "D1E7DD" }, patternType: "solid" },
-          font: { name: "Calibri", sz: 11, bold: true, color: { rgb: "0F5132" } },
+          font: {
+            name: "Calibri",
+            sz: 11,
+            bold: true,
+            color: { rgb: c >= 5 ? "DC2626" : "0F5132" },
+          },
           alignment: { horizontal: c <= 4 ? "right" : "right", vertical: "center" },
         };
       }
@@ -608,16 +613,16 @@ function ViewDriverData() {
                   <td colSpan={6} className="border-r border-zinc-300 bg-emerald-100/90 px-2 py-3 text-right">
                     Total (all rows above)
                   </td>
-                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-mono tabular-nums">
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-mono font-bold text-red-600 tabular-nums">
                     {formatKg(driverFilterTotals.sumNetWt)}
                   </td>
-                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 text-emerald-900">
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-bold text-red-600">
                     {formatRupees(driverFilterTotals.sumAdvance)}
                   </td>
-                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 text-emerald-900">
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-bold text-red-600">
                     {formatRupees(driverFilterTotals.sumLoading)}
                   </td>
-                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 text-emerald-900">
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-bold text-red-600">
                     {formatRupees(driverFilterTotals.sumOthers)}
                   </td>
                   <td className="px-2 py-3" />

@@ -845,8 +845,8 @@ function AddPaddy() {
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
                 {isEditMode
-                  ? "Edit Paddy — Transport journey"
-                  : "Add Paddy — Transport journey"}
+                  ? "EDIT PADDY — Transport journey"
+                  : "ADD PADDY— Transport journey"}
               </h2>
               <p className="mt-2 text-sm text-zinc-600">
                 1 kata = {KATA_KG} kg (fixed). Net katas per farmer:{" "}

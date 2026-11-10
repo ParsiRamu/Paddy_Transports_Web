@@ -487,7 +487,7 @@ function ViewTruckSheet() {
         <div className="flex flex-col gap-4 rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-              View truck sheets
+              VIEW TRUCK SHEETS
             </h2>
             <p className="mt-2 text-sm text-zinc-600">
               Filter by date range, mill, RSK, or account name (accounts column
