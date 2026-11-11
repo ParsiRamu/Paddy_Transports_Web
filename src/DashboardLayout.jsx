@@ -19,10 +19,12 @@ function DashboardLayout({ onLogout }) {
   const [paddyOpen, setPaddyOpen] = useState(false);
   const [truckSheetOpen, setTruckSheetOpen] = useState(false);
   const [driversOpen, setDriversOpen] = useState(false);
+  const [workersOpen, setWorkersOpen] = useState(false);
   const location = useLocation();
   const isPaddyActive = location.pathname.startsWith("/paddy");
   const isTruckSheetActive = location.pathname.startsWith("/truck-sheet");
   const isDriversActive = location.pathname.startsWith("/drivers");
+  const isWorkersActive = location.pathname.startsWith("/workers");
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -39,6 +41,10 @@ function DashboardLayout({ onLogout }) {
   useEffect(() => {
     if (isDriversActive) setDriversOpen(true);
   }, [isDriversActive]);
+
+  useEffect(() => {
+    if (isWorkersActive) setWorkersOpen(true);
+  }, [isWorkersActive]);
 
   const toggleSidebarCollapsedDesktop = useCallback(() => {
     setSidebarCollapsedDesktop((c) => {
@@ -166,6 +172,21 @@ function DashboardLayout({ onLogout }) {
                       }
                     >
                       Individual kayidha paddy
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/paddy/calculate-kayidha"
+                      className={({ isActive }) =>
+                        [
+                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                          isActive
+                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
+                        ].join(" ")
+                      }
+                    >
+                      Calculate Kayidha
                     </NavLink>
                   </li>
                 </ul>
@@ -318,6 +339,67 @@ function DashboardLayout({ onLogout }) {
                       }
                     >
                       View driver data
+                    </NavLink>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-emerald-100/80 bg-white shadow-sm shadow-emerald-900/3">
+            <button
+              type="button"
+              onClick={() => setWorkersOpen((o) => !o)}
+              aria-expanded={workersOpen}
+              className={[
+                "flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left text-sm font-semibold transition-colors",
+                isWorkersActive
+                  ? "bg-emerald-50 text-emerald-800"
+                  : "text-zinc-800 hover:bg-emerald-50/60",
+              ].join(" ")}
+            >
+              <span>Workers</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={[
+                  "shrink-0 text-emerald-600 transition-transform duration-200",
+                  workersOpen ? "rotate-180" : "",
+                ].join(" ")}
+                aria-hidden
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+
+            <div
+              className={[
+                "grid transition-[grid-template-rows] duration-200 ease-out",
+                workersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+              ].join(" ")}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <ul className="space-y-0.5 border-t border-emerald-50 px-2 py-2">
+                  <li>
+                    <NavLink
+                      to="/workers/view"
+                      className={({ isActive }) =>
+                        [
+                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                          isActive
+                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
+                        ].join(" ")
+                      }
+                    >
+                      View Workers Data
                     </NavLink>
                   </li>
                 </ul>

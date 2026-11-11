@@ -8,10 +8,12 @@ import DashboardHome from "./DashboardHome";
 import AddPaddy from "./AddPaddy";
 import ViewPaddy from "./ViewPaddy";
 import ViewKayidhaPaddy from "./ViewKayidhaPaddy";
+import CalculateKayidha from "./CalculateKayidha";
 import AddTruckSheet from "./AddTruckSheet";
 import ViewTruckSheet from "./ViewTruckSheet";
 import AddDriverData from "./AddDriverData";
 import ViewDriverData from "./ViewDriverData";
+import ViewWorkersData from "./ViewWorkersData";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -35,12 +37,14 @@ function App() {
         <Route path="paddy/edit/:journeyId" element={<AddPaddy />} />
         <Route path="paddy/view" element={<ViewPaddy />} />
         <Route path="paddy/kayidha-paddy" element={<ViewKayidhaPaddy />} />
+        <Route path="paddy/calculate-kayidha" element={<CalculateKayidha />} />
         <Route path="truck-sheet/add" element={<AddTruckSheet />} />
         <Route path="truck-sheet/edit/:sheetId" element={<AddTruckSheet />} />
         <Route path="truck-sheet/view" element={<ViewTruckSheet />} />
         <Route path="drivers/add" element={<AddDriverData />} />
         <Route path="drivers/edit/:recordId" element={<AddDriverData />} />
         <Route path="drivers/view" element={<ViewDriverData />} />
+        <Route path="workers/view" element={<ViewWorkersData />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
