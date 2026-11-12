@@ -36,7 +36,7 @@ function formatDateDisplay(dateStr) {
 const DEFAULT_QUINTAL_RATE = 2369;
 
 const ACCOUNTS_SUB_WRAP =
-  "w-full min-w-[380px] overflow-x-auto rounded-lg border border-emerald-100 bg-white";
+  "w-full min-w-[380px] overflow-x-auto rounded-lg border border-zinc-300 bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.1)]";
 const ACCOUNTS_SUB_TABLE =
   "w-full min-w-[380px] table-fixed border-collapse text-left text-[0.7rem] text-zinc-800";
 
@@ -484,7 +484,7 @@ function ViewTruckSheet() {
   return (
     <div className="p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-full space-y-6">
-        <div className="flex flex-col gap-4 rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-400/75 bg-white/90 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
               VIEW TRUCK SHEETS
@@ -513,7 +513,7 @@ function ViewTruckSheet() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-emerald-100/90 bg-white/95 p-4 shadow-sm">
+        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-zinc-400/75 bg-white/95 p-4 shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_2px_8px_-2px_rgba(15,23,42,0.08)]">
           <div className="flex flex-wrap items-end gap-3">
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600">
@@ -527,7 +527,7 @@ function ViewTruckSheet() {
                   notifyIfOtherFilters("date", Boolean(v));
                   setFilterDateFrom(v);
                 }}
-                className="rounded-xl border border-emerald-100 px-3 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/25"
+                className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm shadow-[0_2px_6px_-1px_rgba(15,23,42,0.08)] outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
               />
             </div>
             <div>
@@ -542,7 +542,7 @@ function ViewTruckSheet() {
                   notifyIfOtherFilters("date", Boolean(v));
                   setFilterDateTo(v);
                 }}
-                className="rounded-xl border border-emerald-100 px-3 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/25"
+                className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm shadow-[0_2px_6px_-1px_rgba(15,23,42,0.08)] outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
               />
             </div>
             {dateRangeFilterActive && (
@@ -569,7 +569,7 @@ function ViewTruckSheet() {
                 notifyIfOtherFilters("mill", Boolean(v));
                 setFilterMill(v);
               }}
-              className="min-w-48 rounded-xl border border-emerald-100 px-3 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/25"
+              className="min-w-48 rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm shadow-[0_2px_6px_-1px_rgba(15,23,42,0.08)] outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
             >
               <option value="">All mills</option>
               {millOptions.map((m) => (
@@ -621,7 +621,7 @@ function ViewTruckSheet() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-emerald-100/90 bg-white shadow-lg">
+        <div className="overflow-x-auto rounded-2xl border border-zinc-400/75 bg-white shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)]">
           <table className="w-full min-w-[1360px] border-collapse text-left text-xs text-zinc-800">
             <thead>
               <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">

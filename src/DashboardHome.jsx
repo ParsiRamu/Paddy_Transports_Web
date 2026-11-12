@@ -1,7 +1,7 @@
 function DashboardHome() {
   return (
     <div className="p-5 sm:p-8 lg:p-10">
-      <div className="mx-auto max-w-2xl rounded-2xl border border-emerald-100/90 bg-white/80 p-8 shadow-lg shadow-emerald-900/[0.06] backdrop-blur-sm sm:p-10">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-zinc-400/75 bg-white/90 p-8 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-10">
         <div className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-800">
           Overview
         </div>

@@ -840,7 +840,7 @@ function AddPaddy() {
   return (
     <div className="p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg shadow-emerald-900/5 backdrop-blur-sm sm:p-8">
+        <div className="rounded-2xl border border-zinc-400/75 bg-white/90 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
@@ -889,7 +889,7 @@ function AddPaddy() {
 
         <form
           onSubmit={handleSubmit}
-          className={`space-y-8 rounded-2xl border border-emerald-100/90 bg-white/95 p-6 shadow-lg shadow-emerald-900/5 sm:p-8 ${
+          className={`space-y-8 rounded-2xl border border-zinc-400/75 bg-white/95 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] sm:p-8 ${
             isEditMode && (journeyLoading || journeyLoadError)
               ? "pointer-events-none opacity-50"
               : ""

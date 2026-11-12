@@ -11,6 +11,68 @@ function readSidebarCollapsed() {
   }
 }
 
+function SidebarSection({ title, open, onToggle, links }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-zinc-400/70 bg-white shadow-[0_4px_12px_-2px_rgba(15,23,42,0.12),0_1px_3px_rgba(15,23,42,0.08)]">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 bg-linear-to-r from-[#263C35] to-[#2E483F] px-3.5 py-3 text-left text-sm font-bold tracking-wide text-[#EEF6F2] transition-all hover:from-[#2B453D] hover:to-[#355349]"
+      >
+        <span>{title}</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={[
+            "shrink-0 text-emerald-300 transition-transform duration-200",
+            open ? "rotate-180" : "",
+          ].join(" ")}
+          aria-hidden
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+
+      <div
+        className={[
+          "grid transition-[grid-template-rows] duration-200 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        ].join(" ")}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <ul className="space-y-1 border-t border-zinc-300/80 bg-zinc-50/75 px-2.5 py-2">
+            {links.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  className={({ isActive: linkActive }) =>
+                    [
+                      "block rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+                      linkActive
+                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+                        : "text-zinc-700 hover:bg-emerald-100/70 hover:text-emerald-900",
+                    ].join(" ")
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardLayout({ onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsedDesktop, setSidebarCollapsedDesktop] = useState(
@@ -71,13 +133,13 @@ function DashboardLayout({ onLogout }) {
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 flex h-dvh max-h-dvh w-[min(85vw,260px)] shrink-0 flex-col overflow-hidden border-r border-emerald-100/80 bg-white/95 shadow-xl shadow-emerald-900/5 backdrop-blur-md transition-transform duration-300 ease-out",
-          "lg:static lg:z-auto lg:h-full lg:max-h-none lg:w-[20%] lg:min-w-44 lg:max-w-xs lg:translate-x-0 lg:shadow-none lg:backdrop-blur-none",
+          "fixed inset-y-0 left-0 z-50 flex h-dvh max-h-dvh w-[min(85vw,260px)] shrink-0 flex-col overflow-hidden border-r border-zinc-300/90 bg-white/95 shadow-[6px_0_24px_-4px_rgba(15,23,42,0.14)] backdrop-blur-md transition-transform duration-300 ease-out",
+          "lg:static lg:z-auto lg:h-full lg:max-h-none lg:w-[20%] lg:min-w-44 lg:max-w-xs lg:translate-x-0 lg:shadow-[4px_0_18px_-4px_rgba(15,23,42,0.1)] lg:backdrop-blur-none",
           sidebarCollapsedDesktop ? "lg:hidden" : "",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         ].join(" ")}
       >
-        <div className="shrink-0 border-b border-emerald-100/90 bg-linear-to-r from-white to-emerald-50/50 px-4 py-5">
+        <div className="shrink-0 border-b border-zinc-300/80 bg-linear-to-r from-white to-emerald-50/50 px-4 py-5">
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-emerald-600/90">
             Harikrishna
           </p>
@@ -87,347 +149,52 @@ function DashboardLayout({ onLogout }) {
           <p className="mt-0.5 text-xs text-zinc-500">Operations dashboard</p>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
-          <div className="overflow-hidden rounded-xl border border-emerald-100/80 bg-white shadow-sm shadow-emerald-900/3">
-            <button
-              type="button"
-              onClick={() => setPaddyOpen((o) => !o)}
-              aria-expanded={paddyOpen}
-              className={[
-                "flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left text-sm font-semibold transition-colors",
-                isPaddyActive
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "text-zinc-800 hover:bg-emerald-50/60",
-              ].join(" ")}
-            >
-              <span>Paddy</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={[
-                  "shrink-0 text-emerald-600 transition-transform duration-200",
-                  paddyOpen ? "rotate-180" : "",
-                ].join(" ")}
-                aria-hidden
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
-
-            <div
-              className={[
-                "grid transition-[grid-template-rows] duration-200 ease-out",
-                paddyOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-              ].join(" ")}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <ul className="space-y-0.5 border-t border-emerald-50 px-2 py-2">
-                  <li>
-                    <NavLink
-                      to="/paddy/add"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      Add Paddy
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/paddy/view"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      View Paddy
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/paddy/kayidha-paddy"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      Individual kayidha paddy
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/paddy/calculate-kayidha"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      Calculate Kayidha
-                    </NavLink>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-emerald-100/80 bg-white shadow-sm shadow-emerald-900/3">
-            <button
-              type="button"
-              onClick={() => setTruckSheetOpen((o) => !o)}
-              aria-expanded={truckSheetOpen}
-              className={[
-                "flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left text-sm font-semibold transition-colors",
-                isTruckSheetActive
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "text-zinc-800 hover:bg-emerald-50/60",
-              ].join(" ")}
-            >
-              <span>Truck sheet</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={[
-                  "shrink-0 text-emerald-600 transition-transform duration-200",
-                  truckSheetOpen ? "rotate-180" : "",
-                ].join(" ")}
-                aria-hidden
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
-
-            <div
-              className={[
-                "grid transition-[grid-template-rows] duration-200 ease-out",
-                truckSheetOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-              ].join(" ")}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <ul className="space-y-0.5 border-t border-emerald-50 px-2 py-2">
-                  <li>
-                    <NavLink
-                      to="/truck-sheet/add"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      Add truck sheet
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/truck-sheet/view"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      View truck sheet
-                    </NavLink>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-emerald-100/80 bg-white shadow-sm shadow-emerald-900/3">
-            <button
-              type="button"
-              onClick={() => setDriversOpen((o) => !o)}
-              aria-expanded={driversOpen}
-              className={[
-                "flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left text-sm font-semibold transition-colors",
-                isDriversActive
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "text-zinc-800 hover:bg-emerald-50/60",
-              ].join(" ")}
-            >
-              <span>Drivers</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={[
-                  "shrink-0 text-emerald-600 transition-transform duration-200",
-                  driversOpen ? "rotate-180" : "",
-                ].join(" ")}
-                aria-hidden
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
-
-            <div
-              className={[
-                "grid transition-[grid-template-rows] duration-200 ease-out",
-                driversOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-              ].join(" ")}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <ul className="space-y-0.5 border-t border-emerald-50 px-2 py-2">
-                  <li>
-                    <NavLink
-                      to="/drivers/add"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      Add driver data
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/drivers/view"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      View driver data
-                    </NavLink>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-emerald-100/80 bg-white shadow-sm shadow-emerald-900/3">
-            <button
-              type="button"
-              onClick={() => setWorkersOpen((o) => !o)}
-              aria-expanded={workersOpen}
-              className={[
-                "flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left text-sm font-semibold transition-colors",
-                isWorkersActive
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "text-zinc-800 hover:bg-emerald-50/60",
-              ].join(" ")}
-            >
-              <span>Workers</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={[
-                  "shrink-0 text-emerald-600 transition-transform duration-200",
-                  workersOpen ? "rotate-180" : "",
-                ].join(" ")}
-                aria-hidden
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
-
-            <div
-              className={[
-                "grid transition-[grid-template-rows] duration-200 ease-out",
-                workersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-              ].join(" ")}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <ul className="space-y-0.5 border-t border-emerald-50 px-2 py-2">
-                  <li>
-                    <NavLink
-                      to="/workers/view"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      View Workers Data
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/workers/pay"
-                      className={({ isActive }) =>
-                        [
-                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
-                        ].join(" ")
-                      }
-                    >
-                      Workers Pay
-                    </NavLink>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+        <nav className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-3">
+          <SidebarSection
+            title="Paddy"
+            open={paddyOpen}
+            onToggle={() => setPaddyOpen((o) => !o)}
+            links={[
+              { to: "/paddy/add", label: "Add Paddy" },
+              { to: "/paddy/view", label: "View Paddy" },
+              { to: "/paddy/kayidha-paddy", label: "Individual kayidha paddy" },
+              { to: "/paddy/calculate-kayidha", label: "Calculate Kayidha" },
+            ]}
+          />
+          <SidebarSection
+            title="Truck sheet"
+            open={truckSheetOpen}
+            onToggle={() => setTruckSheetOpen((o) => !o)}
+            links={[
+              { to: "/truck-sheet/add", label: "Add truck sheet" },
+              { to: "/truck-sheet/view", label: "View truck sheet" },
+            ]}
+          />
+          <SidebarSection
+            title="Drivers"
+            open={driversOpen}
+            onToggle={() => setDriversOpen((o) => !o)}
+            links={[
+              { to: "/drivers/add", label: "Add driver data" },
+              { to: "/drivers/view", label: "View driver data" },
+            ]}
+          />
+          <SidebarSection
+            title="Workers"
+            open={workersOpen}
+            onToggle={() => setWorkersOpen((o) => !o)}
+            links={[
+              { to: "/workers/view", label: "View Workers Data" },
+              { to: "/workers/pay", label: "Workers Pay" },
+            ]}
+          />
         </nav>
 
-        <div className="shrink-0 border-t border-emerald-100/90 bg-white/80 p-3">
+        <div className="shrink-0 border-t border-zinc-300/80 bg-white/80 p-3">
           <button
             type="button"
             onClick={onLogout}
-            className="w-full rounded-xl border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.99]"
+            className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.1)] transition-all hover:border-zinc-400 hover:bg-zinc-50 active:scale-[0.99]"
           >
             Log out
           </button>
@@ -435,13 +202,13 @@ function DashboardLayout({ onLogout }) {
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="z-30 flex shrink-0 items-center gap-3 border-b border-emerald-100/80 bg-white/90 px-4 py-3.5 shadow-sm shadow-emerald-900/4 backdrop-blur-md">
+        <header className="z-30 flex shrink-0 items-center gap-3 border-b border-zinc-300/90 bg-white/90 px-4 py-3.5 shadow-[0_4px_14px_-4px_rgba(15,23,42,0.1)] backdrop-blur-md">
           <button
             type="button"
             aria-label="Open menu"
             aria-expanded={sidebarOpen}
             onClick={() => setSidebarOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-100 bg-white text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-300 bg-white text-emerald-800 shadow-sm shadow-zinc-900/10 transition-colors hover:bg-emerald-50 lg:hidden"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -469,7 +236,7 @@ function DashboardLayout({ onLogout }) {
               sidebarCollapsedDesktop ? "Show sidebar" : "Hide sidebar"
             }
             onClick={toggleSidebarCollapsedDesktop}
-            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-100 bg-white text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 lg:inline-flex"
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-300 bg-white text-emerald-800 shadow-sm shadow-zinc-900/10 transition-colors hover:bg-emerald-50 lg:inline-flex"
           >
             {sidebarCollapsedDesktop ? (
               <svg

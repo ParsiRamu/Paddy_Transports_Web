@@ -123,7 +123,7 @@ function ViewKayidhaPaddy() {
   return (
     <div className="p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-full space-y-6">
-        <div className="rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg shadow-emerald-900/5 backdrop-blur-sm sm:p-8">
+        <div className="rounded-2xl border border-zinc-400/75 bg-white/90 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-8">
           <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
             INDIVIDUAL KAYIDHA PADDY
           </h2>
@@ -140,7 +140,7 @@ function ViewKayidhaPaddy() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-emerald-100/90 bg-white/95 p-4 shadow-sm">
+        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-zinc-400/75 bg-white/95 p-4 shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_2px_8px_-2px_rgba(15,23,42,0.08)]">
           <NameSearchFilter
             label="Kayidha (from paddy lines)"
             options={kayidhaSearchOptions}
@@ -163,7 +163,7 @@ function ViewKayidhaPaddy() {
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-emerald-100/90 bg-white shadow-lg shadow-emerald-900/5">
+        <div className="overflow-x-auto rounded-2xl border border-zinc-400/75 bg-white shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)]">
           <table className="w-full min-w-[1340px] border-collapse text-left text-xs text-zinc-800">
             <thead>
               <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">

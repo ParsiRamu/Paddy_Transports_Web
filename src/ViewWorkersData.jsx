@@ -26,7 +26,7 @@ function farmerBagValue(f) {
 }
 
 const WORKERS_FARMER_SUBTABLE_WRAP =
-  "w-full min-w-[560px] overflow-x-auto rounded-lg border border-emerald-100 bg-white";
+  "w-full min-w-[560px] overflow-x-auto rounded-lg border border-zinc-300 bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.1)]";
 const WORKERS_FARMER_SUBTABLE_CLASS =
   "w-full min-w-[560px] table-fixed border-collapse text-left text-[0.7rem] text-zinc-800";
 
@@ -486,7 +486,7 @@ function ViewWorkersData() {
   return (
     <div className="p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-full space-y-6">
-        <div className="flex flex-col gap-4 rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg shadow-emerald-900/5 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-400/75 bg-white/90 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
               VIEW WORKERS DATA
@@ -515,7 +515,7 @@ function ViewWorkersData() {
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-emerald-100/90 bg-white/95 p-4 shadow-sm">
+        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-zinc-400/75 bg-white/95 p-4 shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_2px_8px_-2px_rgba(15,23,42,0.08)]">
           <div className="flex flex-wrap items-end gap-3">
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600">
@@ -525,7 +525,7 @@ function ViewWorkersData() {
                 type="date"
                 value={filterDateFrom}
                 onChange={(e) => setFilterDateFrom(e.target.value)}
-                className="rounded-xl border border-emerald-100 px-3 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/25"
+                className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm shadow-[0_2px_6px_-1px_rgba(15,23,42,0.08)] outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
               />
             </div>
             <div>
@@ -536,7 +536,7 @@ function ViewWorkersData() {
                 type="date"
                 value={filterDateTo}
                 onChange={(e) => setFilterDateTo(e.target.value)}
-                className="rounded-xl border border-emerald-100 px-3 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/25"
+                className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm shadow-[0_2px_6px_-1px_rgba(15,23,42,0.08)] outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
               />
             </div>
             {(filterDateFrom || filterDateTo) && (
@@ -583,7 +583,7 @@ function ViewWorkersData() {
         </div>
 
         {/* Main Table */}
-        <div className="overflow-x-auto rounded-2xl border border-emerald-100/90 bg-white shadow-lg shadow-emerald-900/5">
+        <div className="overflow-x-auto rounded-2xl border border-zinc-400/75 bg-white shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)]">
           <table className="w-full min-w-[1580px] border-collapse text-left text-xs text-zinc-800">
             <thead>
               <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">
@@ -688,7 +688,7 @@ function ViewWorkersData() {
                           value={rate != null ? String(rate) : ""}
                           onChange={(e) => setJourneyRate(j.id, e.target.value)}
                           aria-label={`Rate for journey ${i + 1}`}
-                          className="w-20 rounded-lg border border-emerald-200 bg-white px-2 py-1.5 text-xs font-semibold text-zinc-900 shadow-xs outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/25"
+                          className="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-semibold text-zinc-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
                         >
                           <option value="">Rate</option>
                           {RATE_OPTIONS.map((num) => (
@@ -707,7 +707,7 @@ function ViewWorkersData() {
                           }
                           placeholder="—"
                           aria-label={`TL worker amount for journey ${i + 1}`}
-                          className="w-32 cursor-default rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 font-mono text-xs font-semibold text-emerald-900 outline-none tabular-nums"
+                          className="w-32 cursor-default rounded-lg border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-xs font-semibold text-emerald-900 shadow-xs outline-none tabular-nums"
                         />
                       </td>
                       <td className="border-r border-zinc-200 px-2 py-2.5">
@@ -726,7 +726,7 @@ function ViewWorkersData() {
                             }
                             placeholder="0"
                             aria-label={`Worker paddy amount for journey ${i + 1}`}
-                            className="w-32 rounded-lg border border-emerald-200 bg-white py-1.5 pl-6 pr-2.5 font-mono text-xs font-semibold text-zinc-900 shadow-xs outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/25 tabular-nums"
+                            className="w-32 rounded-lg border border-zinc-300 bg-white py-1.5 pl-6 pr-2.5 font-mono text-xs font-semibold text-zinc-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 tabular-nums"
                           />
                         </div>
                       </td>
@@ -741,7 +741,7 @@ function ViewWorkersData() {
                           }
                           placeholder={workerCount === 0 ? "0 workers" : "—"}
                           aria-label={`Amount per worker for journey ${i + 1}`}
-                          className="w-32 cursor-default rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 font-mono text-xs font-semibold text-blue-700 outline-none tabular-nums"
+                          className="w-32 cursor-default rounded-lg border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-xs font-semibold text-blue-700 shadow-xs outline-none tabular-nums"
                         />
                       </td>
                     </tr>

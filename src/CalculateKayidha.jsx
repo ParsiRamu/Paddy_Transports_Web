@@ -131,7 +131,7 @@ function ComboSearchInput({
           }}
           placeholder={placeholder}
           autoComplete="off"
-          className="w-full rounded-xl border border-emerald-100 bg-white py-2 pl-3 pr-14 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/25"
+          className="w-full rounded-xl border border-zinc-300 bg-white py-2 pl-3 pr-14 text-sm text-zinc-900 shadow-[0_2px_6px_-1px_rgba(15,23,42,0.08)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
         />
         <div className="absolute right-1.5 flex items-center gap-0.5">
           {value ? (
@@ -166,7 +166,7 @@ function ComboSearchInput({
       </div>
 
       {open && (
-        <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-emerald-100 bg-white py-1 text-sm shadow-xl">
+        <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-zinc-300 bg-white py-1 text-sm shadow-[0_10px_28px_-4px_rgba(15,23,42,0.18)]">
           {filteredOptions.length === 0 ? (
             <li className="px-3 py-3 text-center text-xs text-zinc-500">
               {emptyHint}
@@ -649,7 +649,7 @@ function CalculateKayidha() {
     <div className="p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-full space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col gap-4 rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg shadow-emerald-900/5 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-400/75 bg-white/90 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
               CALCULATE KAYIDHA
@@ -679,7 +679,7 @@ function CalculateKayidha() {
         )}
 
         {/* Search / Filter Section (ViewPaddy Farmer Data Lookup) */}
-        <div className="space-y-4 rounded-2xl border border-emerald-100/90 bg-white/95 p-5 shadow-sm">
+        <div className="space-y-4 rounded-2xl border border-zinc-400/75 bg-white/95 p-5 shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_2px_8px_-2px_rgba(15,23,42,0.08)]">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex flex-wrap items-end gap-4">
               <ComboSearchInput
@@ -712,8 +712,8 @@ function CalculateKayidha() {
                     autoComplete="off"
                     className={`w-full rounded-xl border px-3 py-2 text-sm shadow-sm outline-none transition ${
                       isHolderSet
-                        ? "cursor-default border-emerald-300 bg-emerald-50/80 font-semibold text-emerald-950"
-                        : "border-emerald-100 bg-white text-zinc-900 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/25"
+                        ? "cursor-default border-emerald-500/70 bg-emerald-50/80 font-semibold text-emerald-950"
+                        : "border-zinc-300 bg-white text-zinc-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
                     }`}
                   />
                   {!isHolderSet && (
@@ -765,7 +765,7 @@ function CalculateKayidha() {
 
           {/* Search Results Table */}
           {!hasFilterText && !showAllMatching ? (
-            <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/30 px-4 py-6 text-center text-sm text-zinc-600">
+            <div className="rounded-xl border border-dashed border-zinc-400/70 bg-emerald-50/30 px-4 py-6 text-center text-sm text-zinc-600 shadow-inner">
               Enter or select a{" "}
               <span className="font-semibold text-emerald-900">
                 Farmer Name
@@ -786,7 +786,7 @@ function CalculateKayidha() {
                 </span>
               </p>
 
-              <div className="max-h-96 overflow-auto rounded-2xl border border-emerald-100/90 bg-white shadow-sm">
+              <div className="max-h-96 overflow-auto rounded-2xl border border-zinc-300 bg-white shadow-[0_6px_18px_-4px_rgba(15,23,42,0.12)]">
                 <table className="w-full min-w-[1160px] border-collapse text-left text-xs text-zinc-800">
                   <thead className="sticky top-0 z-10">
                     <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">
@@ -939,7 +939,7 @@ function CalculateKayidha() {
         </div>
 
         {/* Calculate Kayidha Selected Rows & Totals Section */}
-        <div className="space-y-4 rounded-2xl border border-emerald-100/90 bg-white p-5 shadow-lg shadow-emerald-900/5">
+        <div className="space-y-4 rounded-2xl border border-zinc-400/75 bg-white p-5 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-zinc-900">
@@ -974,7 +974,7 @@ function CalculateKayidha() {
           {/* Summary Cards */}
           {selectedRows.length > 0 && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5">
+              <div className="rounded-xl border border-zinc-300 bg-emerald-50/40 p-3.5 shadow-[0_3px_10px_-2px_rgba(15,23,42,0.08)]">
                 <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-800">
                   Total Bags
                 </p>
@@ -982,7 +982,7 @@ function CalculateKayidha() {
                   {totals.bags.toLocaleString("en-IN")}
                 </p>
               </div>
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5">
+              <div className="rounded-xl border border-zinc-300 bg-emerald-50/40 p-3.5 shadow-[0_3px_10px_-2px_rgba(15,23,42,0.08)]">
                 <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-800">
                   Total Weight (kg)
                 </p>
@@ -993,7 +993,7 @@ function CalculateKayidha() {
                   })}
                 </p>
               </div>
-              <div className="rounded-xl border border-red-100 bg-red-50/40 p-3.5">
+              <div className="rounded-xl border border-red-300/80 bg-red-50/40 p-3.5 shadow-[0_3px_10px_-2px_rgba(15,23,42,0.08)]">
                 <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-red-700">
                   Total Net Katas
                 </p>
@@ -1001,7 +1001,7 @@ function CalculateKayidha() {
                   {totals.netKatas.toFixed(4)}
                 </p>
               </div>
-              <div className="rounded-xl border border-red-100 bg-red-50/40 p-3.5">
+              <div className="rounded-xl border border-red-300/80 bg-red-50/40 p-3.5 shadow-[0_3px_10px_-2px_rgba(15,23,42,0.08)]">
                 <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-red-700">
                   Total Amount (₹)
                 </p>
@@ -1014,7 +1014,7 @@ function CalculateKayidha() {
 
           {/* Holder-wise (Kayidha) Breakdown */}
           {holderBreakdown.length > 0 && (
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/20 p-3.5">
+            <div className="rounded-xl border border-zinc-300 bg-emerald-50/20 p-3.5 shadow-[0_3px_10px_-2px_rgba(15,23,42,0.06)]">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-900">
                 Holder (Kayidha) Breakdown
               </p>
@@ -1022,7 +1022,7 @@ function CalculateKayidha() {
                 {holderBreakdown.map((h) => (
                   <div
                     key={h.holderName}
-                    className="rounded-lg border border-emerald-200/80 bg-white px-3 py-2 text-xs shadow-xs"
+                    className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs shadow-sm"
                   >
                     <p className="font-semibold text-emerald-900">
                       {h.holderName}{" "}
@@ -1048,7 +1048,7 @@ function CalculateKayidha() {
           )}
 
           {/* Selected Rows Table */}
-          <div className="overflow-x-auto rounded-2xl border border-emerald-100/90 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border border-zinc-300 bg-white shadow-[0_6px_18px_-4px_rgba(15,23,42,0.12)]">
             <table className="w-full min-w-[1160px] border-collapse text-left text-xs text-zinc-800">
               <thead>
                 <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">

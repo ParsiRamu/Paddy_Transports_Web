@@ -70,7 +70,7 @@ export function NameSearchFilter({
           onChange={(e) => onInputChange(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="min-w-48 flex-1 rounded-xl border border-emerald-100 px-3 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/25"
+          className="min-w-48 flex-1 rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm shadow-[0_2px_6px_-1px_rgba(15,23,42,0.08)] outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
           autoComplete="off"
         />
         {selectedValue ? (
@@ -88,7 +88,7 @@ export function NameSearchFilter({
         ) : null}
       </div>
       {open && (
-        <ul className="absolute z-30 mt-1 max-h-48 w-full min-w-48 overflow-auto rounded-xl border border-emerald-100 bg-white py-1 text-sm shadow-lg">
+        <ul className="absolute z-30 mt-1 max-h-48 w-full min-w-48 overflow-auto rounded-xl border border-zinc-300 bg-white py-1 text-sm shadow-[0_10px_28px_-4px_rgba(15,23,42,0.18)]">
           {filtered.length === 0 ? (
             <li className="px-3 py-3 text-center text-zinc-500">{emptyHint}</li>
           ) : (
@@ -150,7 +150,7 @@ function FarmerSubtableColgroup() {
 }
 
 const FARMER_SUBTABLE_WRAP =
-  "w-full min-w-[720px] overflow-x-auto rounded-lg border border-emerald-100 bg-white";
+  "w-full min-w-[720px] overflow-x-auto rounded-lg border border-zinc-300 bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.1)]";
 const FARMER_SUBTABLE_CLASS =
   "w-full min-w-[720px] table-fixed border-collapse text-left text-[0.7rem] text-zinc-800";
 
