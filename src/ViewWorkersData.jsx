@@ -6,44 +6,23 @@ import { ToastContainer, toast } from "react-toastify";
 import { db } from "./firebase";
 import { formatRupees } from "./formatRupees";
 import { formatTotalNetKata, NameSearchFilter } from "./paddyViewShared";
+import {
+  computeJourneyWorkerAmounts,
+  formatDateDisplay,
+  journeyDateKey,
+  readStoredJsonMap,
+  WORKER_PADDY_AMT_STORAGE_KEY,
+  WORKER_RATES_STORAGE_KEY,
+} from "./workersShared";
 import "react-toastify/dist/ReactToastify.css";
 
-const WORKER_RATES_STORAGE_KEY = "hari_workers_rates_by_journey";
 const RATE_OPTIONS = Array.from({ length: 16 }, (_, i) => 20 + i);
-
-function journeyDateKey(j) {
-  const s = String(j.date ?? "").trim();
-  if (!s) return "";
-  return s.slice(0, 10);
-}
-
-function formatDateDisplay(dateStr) {
-  if (!dateStr) return "—";
-  const s = String(dateStr).trim();
-  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    const [, yyyy, mm, dd] = match;
-    return `${dd}-${mm}-${yyyy}`;
-  }
-  return s;
-}
 
 function farmerBagValue(f) {
   const v = f?.bagValue ?? f?.bagValuePerKata;
   return v != null && v !== "" && Number.isFinite(Number(v))
     ? Number(v)
     : null;
-}
-
-function readStoredRates() {
-  try {
-    const raw = localStorage.getItem(WORKER_RATES_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
 }
 
 const WORKERS_FARMER_SUBTABLE_WRAP =
@@ -149,7 +128,12 @@ function ViewWorkersData() {
   const [filterDateTo, setFilterDateTo] = useState("");
   const [filterVehicleNo, setFilterVehicleNo] = useState("");
 
-  const [ratesByJourney, setRatesByJourney] = useState(readStoredRates);
+  const [ratesByJourney, setRatesByJourney] = useState(() =>
+    readStoredJsonMap(WORKER_RATES_STORAGE_KEY),
+  );
+  const [workerPaddyAmtByJourney, setWorkerPaddyAmtByJourney] = useState(() =>
+    readStoredJsonMap(WORKER_PADDY_AMT_STORAGE_KEY),
+  );
 
   useEffect(() => {
     try {
@@ -161,6 +145,17 @@ function ViewWorkersData() {
       /* ignore storage errors */
     }
   }, [ratesByJourney]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        WORKER_PADDY_AMT_STORAGE_KEY,
+        JSON.stringify(workerPaddyAmtByJourney),
+      );
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [workerPaddyAmtByJourney]);
 
   useEffect(() => {
     const unsubJ = onSnapshot(
@@ -257,45 +252,51 @@ function ViewWorkersData() {
     });
   }, []);
 
+  const setJourneyWorkerPaddyAmt = useCallback((journeyId, amtVal) => {
+    setWorkerPaddyAmtByJourney((prev) => {
+      const next = { ...prev };
+      if (amtVal === "") {
+        delete next[journeyId];
+      } else {
+        next[journeyId] = amtVal;
+      }
+      return next;
+    });
+  }, []);
+
   const computeRowAmounts = useCallback(
-    (j) => {
-      const rawRate = ratesByJourney[j.id];
-      const rate =
-        rawRate != null && rawRate !== "" && Number.isFinite(Number(rawRate))
-          ? Number(rawRate)
-          : null;
-      const totalNetKata =
-        j.totalNetKatas != null && Number.isFinite(Number(j.totalNetKatas))
-          ? Number(j.totalNetKatas)
-          : null;
-      const workerCount = Array.isArray(j.workerIds) ? j.workerIds.length : 0;
-
-      const tlWorkerAmt =
-        rate != null && totalNetKata != null ? totalNetKata * rate : null;
-      const amountPerWorker =
-        tlWorkerAmt != null && workerCount > 0
-          ? tlWorkerAmt / workerCount
-          : null;
-
-      return { rate, totalNetKata, workerCount, tlWorkerAmt, amountPerWorker };
-    },
-    [ratesByJourney],
+    (j) =>
+      computeJourneyWorkerAmounts(j, ratesByJourney, workerPaddyAmtByJourney),
+    [ratesByJourney, workerPaddyAmtByJourney],
   );
 
   const tableTotals = useMemo(() => {
     let sumNetKata = 0;
     let sumTlWorkerAmt = 0;
     let hasAnyTlAmt = false;
+    let sumWorkerPaddyAmt = 0;
+    let hasAnyPaddyAmt = false;
 
     for (const j of filteredJourneys) {
-      const { totalNetKata, tlWorkerAmt } = computeRowAmounts(j);
+      const { totalNetKata, tlWorkerAmt, workerPaddyAmt } =
+        computeRowAmounts(j);
       if (totalNetKata != null) sumNetKata += totalNetKata;
       if (tlWorkerAmt != null) {
         sumTlWorkerAmt += tlWorkerAmt;
         hasAnyTlAmt = true;
       }
+      if (workerPaddyAmt != null) {
+        sumWorkerPaddyAmt += workerPaddyAmt;
+        hasAnyPaddyAmt = true;
+      }
     }
-    return { sumNetKata, sumTlWorkerAmt, hasAnyTlAmt };
+    return {
+      sumNetKata,
+      sumTlWorkerAmt,
+      hasAnyTlAmt,
+      sumWorkerPaddyAmt,
+      hasAnyPaddyAmt,
+    };
   }, [filteredJourneys, computeRowAmounts]);
 
   const clearAllFilters = useCallback(() => {
@@ -336,15 +337,22 @@ function ViewWorkersData() {
       "FARMERS",
       "TOTAL NET KATA",
       "RATE",
-      "TL WORKER AMT",
+      "TL WORKERS AMT",
+      "WORKER PADDY AMT",
       "AMOUNT PER WORKER",
     ];
 
     const sheetData = [headers];
 
     filteredJourneys.forEach((j, idx) => {
-      const { rate, totalNetKata, workerCount, tlWorkerAmt, amountPerWorker } =
-        computeRowAmounts(j);
+      const {
+        rate,
+        totalNetKata,
+        workerCount,
+        tlWorkerAmt,
+        workerPaddyAmt,
+        amountPerWorker,
+      } = computeRowAmounts(j);
       const farmersSummary = (Array.isArray(j.farmers) ? j.farmers : [])
         .map((f) => {
           const fname = farmerMap[f.farmerId]?.trim() || "Farmer";
@@ -368,6 +376,7 @@ function ViewWorkersData() {
         totalNetKata != null ? totalNetKata : "",
         rate != null ? rate : "",
         tlWorkerAmt != null ? tlWorkerAmt : "",
+        workerPaddyAmt != null ? workerPaddyAmt : "",
         amountPerWorker != null ? amountPerWorker : "",
       ]);
     });
@@ -385,6 +394,7 @@ function ViewWorkersData() {
       tableTotals.sumNetKata,
       "",
       tableTotals.hasAnyTlAmt ? tableTotals.sumTlWorkerAmt : "",
+      tableTotals.hasAnyPaddyAmt ? tableTotals.sumWorkerPaddyAmt : "",
       "",
     ]);
 
@@ -401,6 +411,7 @@ function ViewWorkersData() {
       { wch: 40 },
       { wch: 16 },
       { wch: 10 },
+      { wch: 18 },
       { wch: 18 },
       { wch: 20 },
     ];
@@ -423,21 +434,27 @@ function ViewWorkersData() {
     for (let rIdx = 1; rIdx <= filteredJourneys.length; rIdx++) {
       const nkRef = XLSX.utils.encode_cell({ r: rIdx, c: 8 });
       const tlRef = XLSX.utils.encode_cell({ r: rIdx, c: 10 });
-      const perRef = XLSX.utils.encode_cell({ r: rIdx, c: 11 });
+      const paddyRef = XLSX.utils.encode_cell({ r: rIdx, c: 11 });
+      const perRef = XLSX.utils.encode_cell({ r: rIdx, c: 12 });
 
       if (ws[nkRef] && typeof ws[nkRef].v === "number")
         ws[nkRef].z = "#,##0.0000";
       if (ws[tlRef] && typeof ws[tlRef].v === "number")
         ws[tlRef].z = '"₹"#,##0.00';
+      if (ws[paddyRef] && typeof ws[paddyRef].v === "number")
+        ws[paddyRef].z = '"₹"#,##0.00';
       if (ws[perRef] && typeof ws[perRef].v === "number")
         ws[perRef].z = '"₹"#,##0.00';
     }
 
     const totNkRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 8 });
     const totTlRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 10 });
+    const totPaddyRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 11 });
     if (ws[totNkRef]) ws[totNkRef].z = "#,##0.0000";
     if (ws[totTlRef] && typeof ws[totTlRef].v === "number")
       ws[totTlRef].z = '"₹"#,##0.00';
+    if (ws[totPaddyRef] && typeof ws[totPaddyRef].v === "number")
+      ws[totPaddyRef].z = '"₹"#,##0.00';
 
     for (let c = 0; c < headers.length; c++) {
       const ref = XLSX.utils.encode_cell({ r: totalRowIndex, c });
@@ -472,11 +489,12 @@ function ViewWorkersData() {
         <div className="flex flex-col gap-4 rounded-2xl border border-emerald-100/90 bg-white/90 p-6 shadow-lg shadow-emerald-900/5 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-              View Workers Data
+              VIEW WORKERS DATA
             </h2>
             <p className="mt-2 text-sm text-zinc-600">
-              Filter journeys by Date or Vehicle No. Select a Rate (20–35) to
-              calculate TL Worker Amount and Amount per Worker.
+              Filter journeys by Date or Vehicle No. Select a Rate (20–35) and
+              enter Worker Paddy Amt to calculate TL Workers Amt and Amount per
+              Worker.
             </p>
           </div>
           <button
@@ -566,7 +584,7 @@ function ViewWorkersData() {
 
         {/* Main Table */}
         <div className="overflow-x-auto rounded-2xl border border-emerald-100/90 bg-white shadow-lg shadow-emerald-900/5">
-          <table className="w-full min-w-[1440px] border-collapse text-left text-xs text-zinc-800">
+          <table className="w-full min-w-[1580px] border-collapse text-left text-xs text-zinc-800">
             <thead>
               <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">
                 <th className="sticky left-0 z-10 rounded-tl-xl border-r border-[#467C64] bg-[#2D6A4F] px-2 py-3 text-white shadow-[1px_0_0_0_#467C64]">
@@ -600,7 +618,10 @@ function ViewWorkersData() {
                   Rate
                 </th>
                 <th className="min-w-36 border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
-                  TL worker Amt
+                  TL workers Amt
+                </th>
+                <th className="min-w-36 border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
+                  Worker Paddy Amt
                 </th>
                 <th className="min-w-36 rounded-tr-xl px-2 py-3 whitespace-nowrap">
                   Amount per Worker
@@ -611,7 +632,7 @@ function ViewWorkersData() {
               {filteredJourneys.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={12}
+                    colSpan={13}
                     className="px-4 py-10 text-center text-sm text-zinc-500"
                   >
                     No journeys match the filters.
@@ -623,6 +644,7 @@ function ViewWorkersData() {
                     rate,
                     workerCount,
                     tlWorkerAmt,
+                    rawWorkerPaddyAmt,
                     amountPerWorker,
                   } = computeRowAmounts(j);
 
@@ -688,6 +710,26 @@ function ViewWorkersData() {
                           className="w-32 cursor-default rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 font-mono text-xs font-semibold text-emerald-900 outline-none tabular-nums"
                         />
                       </td>
+                      <td className="border-r border-zinc-200 px-2 py-2.5">
+                        <div className="relative flex items-center">
+                          <span className="pointer-events-none absolute left-2.5 text-xs font-semibold text-zinc-400">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            inputMode="decimal"
+                            value={rawWorkerPaddyAmt}
+                            onChange={(e) =>
+                              setJourneyWorkerPaddyAmt(j.id, e.target.value)
+                            }
+                            placeholder="0"
+                            aria-label={`Worker paddy amount for journey ${i + 1}`}
+                            className="w-32 rounded-lg border border-emerald-200 bg-white py-1.5 pl-6 pr-2.5 font-mono text-xs font-semibold text-zinc-900 shadow-xs outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/25 tabular-nums"
+                          />
+                        </div>
+                      </td>
                       <td className="px-2 py-2.5">
                         <input
                           type="text"
@@ -723,6 +765,11 @@ function ViewWorkersData() {
                   <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-mono font-bold text-red-600 tabular-nums">
                     {tableTotals.hasAnyTlAmt
                       ? formatRupees(tableTotals.sumTlWorkerAmt)
+                      : "—"}
+                  </td>
+                  <td className="border-r border-zinc-300 whitespace-nowrap px-2 py-3 font-mono font-bold text-red-600 tabular-nums">
+                    {tableTotals.hasAnyPaddyAmt
+                      ? formatRupees(tableTotals.sumWorkerPaddyAmt)
                       : "—"}
                   </td>
                   <td className="px-2 py-3" />

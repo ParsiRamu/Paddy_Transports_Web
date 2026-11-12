@@ -14,6 +14,7 @@ import ViewTruckSheet from "./ViewTruckSheet";
 import AddDriverData from "./AddDriverData";
 import ViewDriverData from "./ViewDriverData";
 import ViewWorkersData from "./ViewWorkersData";
+import WorkersPay from "./WorkersPay";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -45,6 +46,7 @@ function App() {
         <Route path="drivers/edit/:recordId" element={<AddDriverData />} />
         <Route path="drivers/view" element={<ViewDriverData />} />
         <Route path="workers/view" element={<ViewWorkersData />} />
+        <Route path="workers/pay" element={<WorkersPay />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

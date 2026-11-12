@@ -402,6 +402,21 @@ function DashboardLayout({ onLogout }) {
                       View Workers Data
                     </NavLink>
                   </li>
+                  <li>
+                    <NavLink
+                      to="/workers/pay"
+                      className={({ isActive }) =>
+                        [
+                          "block rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                          isActive
+                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+                            : "text-zinc-600 hover:bg-emerald-50 hover:text-emerald-800",
+                        ].join(" ")
+                      }
+                    >
+                      Workers Pay
+                    </NavLink>
+                  </li>
                 </ul>
               </div>
             </div>
