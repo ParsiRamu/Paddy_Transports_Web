@@ -7,6 +7,8 @@ import {
   getDoc,
   onSnapshot,
 } from "firebase/firestore";
+import * as XLSX from "xlsx";
+import { FileSpreadsheet } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import { db } from "./firebase";
 import { formatRupees } from "./formatRupees";
@@ -314,25 +316,415 @@ function ViewPaddy() {
     dateRangeFilterActive || filterMill || filterFarmerId || filterKayidhaName,
   );
 
-  const workerNames = (ids) => {
-    if (!Array.isArray(ids) || ids.length === 0) return "—";
-    return ids
-      .map((id) => workerMap[id] || id)
-      .filter(Boolean)
-      .join(", ");
-  };
+  const workerNames = useCallback(
+    (ids) => {
+      if (!Array.isArray(ids) || ids.length === 0) return "—";
+      return ids
+        .map((id) => workerMap[id] || id)
+        .filter(Boolean)
+        .join(", ");
+    },
+    [workerMap],
+  );
+
+  const handleExportExcel = useCallback(() => {
+    if (!filteredJourneys || filteredJourneys.length === 0) {
+      toast.info("No journeys available to export with the current filters.");
+      return;
+    }
+
+    // --- SHEET 1: PADDY SUMMARY ---
+    const summaryHeaders = [
+      "Serial Number",
+      "Journey ID",
+      "Date",
+      "Vehicle No.",
+      "Rice Mill",
+      "Total Bags",
+      "Worker Count",
+      "Workers",
+      "Total Net Katas",
+      "Grand Total (₹)",
+    ];
+
+    const summaryData = [summaryHeaders];
+
+    filteredJourneys.forEach((j, idx) => {
+      const serialNo = idx + 1;
+      const journeyId = String(j.id ?? "").trim();
+      const dateStr =
+        formatDateDisplay(j.date) !== "—"
+          ? formatDateDisplay(j.date)
+          : String(j.date ?? "").trim() || "—";
+      const vehicle = String(j.vehicleNo ?? "").trim() || "—";
+      const mill = String(j.riceMillName ?? "").trim() || "—";
+      const bags =
+        j.totalBagsCount != null &&
+        j.totalBagsCount !== "" &&
+        Number.isFinite(Number(j.totalBagsCount))
+          ? Number(j.totalBagsCount)
+          : 0;
+      const wCount = Array.isArray(j.workerIds) ? j.workerIds.length : 0;
+      const wNames =
+        workerNames(j.workerIds) !== "—" ? workerNames(j.workerIds) : "—";
+      const totalNk =
+        j.totalNetKatas != null &&
+        j.totalNetKatas !== "" &&
+        Number.isFinite(Number(j.totalNetKatas))
+          ? Number(j.totalNetKatas)
+          : 0;
+      const gTotal =
+        j.grandTotal != null &&
+        j.grandTotal !== "" &&
+        Number.isFinite(Number(j.grandTotal))
+          ? Number(j.grandTotal)
+          : 0;
+
+      summaryData.push([
+        serialNo,
+        journeyId,
+        dateStr,
+        vehicle,
+        mill,
+        bags,
+        wCount,
+        wNames,
+        totalNk,
+        gTotal,
+      ]);
+    });
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+
+    wsSummary["!cols"] = [
+      { wch: 14 }, // Serial Number
+      { wch: 24 }, // Journey ID
+      { wch: 14 }, // Date
+      { wch: 16 }, // Vehicle No.
+      { wch: 32 }, // Rice Mill
+      { wch: 14 }, // Total Bags
+      { wch: 16 }, // Worker Count
+      { wch: 32 }, // Workers
+      { wch: 18 }, // Total Net Katas
+      { wch: 20 }, // Grand Total (₹)
+    ];
+
+    // --- SHEET 2: FARMER DETAILS ---
+    const detailsHeaders = [
+      "Journey Number",
+      "Journey ID",
+      "Date",
+      "Rice Mill",
+      "Farmer Name",
+      "Kayidha",
+      "Mode (KG)",
+      "Bags",
+      "Above KG",
+      "Value",
+      "Total KG",
+      "Net Katas",
+      "Farmer Amount (₹)",
+    ];
+
+    const detailsData = [detailsHeaders];
+    let totalFarmerRows = 0;
+
+    filteredJourneys.forEach((j, idx) => {
+      const journeyNum = idx + 1;
+      const journeyId = String(j.id ?? "").trim();
+      const dateStr =
+        formatDateDisplay(j.date) !== "—"
+          ? formatDateDisplay(j.date)
+          : String(j.date ?? "").trim() || "—";
+      const mill = String(j.riceMillName ?? "").trim() || "—";
+
+      const farmersArr = Array.isArray(j.farmers) ? j.farmers : [];
+      const matchingFarmers =
+        filterFarmerId || filterKayidhaName
+          ? farmersArr.filter((f) =>
+              farmerRowMatchesFilters(f, filterFarmerId, filterKayidhaName),
+            )
+          : farmersArr;
+
+      matchingFarmers.forEach((f) => {
+        totalFarmerRows++;
+        const fName =
+          String(farmerMap[f.farmerId] ?? f.farmerName ?? "").trim() ||
+          "Farmer";
+        const kayidha =
+          typeof f.kayidhaName === "string" && f.kayidhaName.trim()
+            ? f.kayidhaName.trim()
+            : "—";
+        const mode =
+          f.weightMode != null &&
+          f.weightMode !== "" &&
+          Number.isFinite(Number(f.weightMode))
+            ? Number(f.weightMode)
+            : "";
+        const bags =
+          f.bags != null && f.bags !== "" && Number.isFinite(Number(f.bags))
+            ? Number(f.bags)
+            : "";
+        const aboveKgVal = f.aboveKgs ?? f.aboveKg;
+        const aboveKg =
+          aboveKgVal != null &&
+          aboveKgVal !== "" &&
+          Number.isFinite(Number(aboveKgVal))
+            ? Number(aboveKgVal)
+            : "";
+        const valVal = f.bagValue ?? f.bagValuePerKata;
+        const value =
+          valVal != null && valVal !== "" && Number.isFinite(Number(valVal))
+            ? Number(valVal)
+            : "";
+        const totalKg =
+          f.totalKg != null &&
+          f.totalKg !== "" &&
+          Number.isFinite(Number(f.totalKg))
+            ? Number(f.totalKg)
+            : "";
+        const netKatas =
+          f.netKatas != null &&
+          f.netKatas !== "" &&
+          Number.isFinite(Number(f.netKatas))
+            ? Number(f.netKatas)
+            : "";
+        const lineRupees = farmerLineRupees(f);
+        const amount =
+          lineRupees != null && Number.isFinite(Number(lineRupees))
+            ? Number(lineRupees)
+            : "";
+
+        detailsData.push([
+          journeyNum,
+          journeyId,
+          dateStr,
+          mill,
+          fName,
+          kayidha,
+          mode,
+          bags,
+          aboveKg,
+          value,
+          totalKg,
+          netKatas,
+          amount,
+        ]);
+      });
+    });
+
+    const wsDetails = XLSX.utils.aoa_to_sheet(detailsData);
+
+    wsDetails["!cols"] = [
+      { wch: 16 }, // Journey Number
+      { wch: 24 }, // Journey ID
+      { wch: 14 }, // Date
+      { wch: 32 }, // Rice Mill
+      { wch: 28 }, // Farmer Name
+      { wch: 20 }, // Kayidha
+      { wch: 12 }, // Mode (KG)
+      { wch: 10 }, // Bags
+      { wch: 12 }, // Above KG
+      { wch: 12 }, // Value
+      { wch: 14 }, // Total KG
+      { wch: 16 }, // Net Katas
+      { wch: 20 }, // Farmer Amount (₹)
+    ];
+
+    // --- STYLING & NUMBER FORMATTING ---
+    const headerStyle = {
+      fill: { fgColor: { rgb: "2D6A4F" }, patternType: "solid" },
+      font: {
+        name: "Calibri",
+        sz: 11,
+        bold: true,
+        color: { rgb: "FFFFFF" },
+      },
+      alignment: {
+        horizontal: "center",
+        vertical: "center",
+        wrapText: true,
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "245840" } },
+        bottom: { style: "thin", color: { rgb: "245840" } },
+        left: { style: "thin", color: { rgb: "245840" } },
+        right: { style: "thin", color: { rgb: "245840" } },
+      },
+    };
+
+    const makeDataStyle = (isEven, align = "left") => ({
+      fill: {
+        fgColor: { rgb: isEven ? "F8F9FA" : "FFFFFF" },
+        patternType: "solid",
+      },
+      font: { name: "Calibri", sz: 10, color: { rgb: "1F2937" } },
+      alignment: { horizontal: align, vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "E5E7EB" } },
+        bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+        left: { style: "thin", color: { rgb: "E5E7EB" } },
+        right: { style: "thin", color: { rgb: "E5E7EB" } },
+      },
+    });
+
+    // Style Sheet 1
+    for (let c = 0; c < summaryHeaders.length; c++) {
+      const ref = XLSX.utils.encode_cell({ r: 0, c });
+      if (wsSummary[ref]) wsSummary[ref].s = headerStyle;
+    }
+
+    const summaryAlignments = [
+      "center", // 0: Serial Number
+      "center", // 1: Journey ID
+      "center", // 2: Date
+      "center", // 3: Vehicle No.
+      "left", // 4: Rice Mill
+      "right", // 5: Total Bags
+      "right", // 6: Worker Count
+      "left", // 7: Workers
+      "right", // 8: Total Net Katas
+      "right", // 9: Grand Total (₹)
+    ];
+
+    for (let rIdx = 1; rIdx < summaryData.length; rIdx++) {
+      const isEven = rIdx % 2 === 0;
+      for (let c = 0; c < summaryHeaders.length; c++) {
+        const ref = XLSX.utils.encode_cell({ r: rIdx, c });
+        if (wsSummary[ref]) {
+          wsSummary[ref].s = makeDataStyle(isEven, summaryAlignments[c]);
+        }
+      }
+      const bagsRef = XLSX.utils.encode_cell({ r: rIdx, c: 5 });
+      const wCountRef = XLSX.utils.encode_cell({ r: rIdx, c: 6 });
+      const nkRef = XLSX.utils.encode_cell({ r: rIdx, c: 8 });
+      const totRef = XLSX.utils.encode_cell({ r: rIdx, c: 9 });
+
+      if (wsSummary[bagsRef]) wsSummary[bagsRef].z = "#,##0";
+      if (wsSummary[wCountRef]) wsSummary[wCountRef].z = "#,##0";
+      if (wsSummary[nkRef]) wsSummary[nkRef].z = "#,##0.0000";
+      if (wsSummary[totRef]) wsSummary[totRef].z = '"₹"#,##0.00';
+    }
+
+    // Auto-filter and freeze pane for Sheet 1
+    if (summaryData.length > 1) {
+      wsSummary["!autofilter"] = {
+        ref: XLSX.utils.encode_range({
+          s: { r: 0, c: 0 },
+          e: { r: summaryData.length - 1, c: summaryHeaders.length - 1 },
+        }),
+      };
+    }
+    wsSummary["!views"] = [
+      { state: "frozen", xSplit: 0, ySplit: 1, topLeftCell: "A2", activeCell: "A2" },
+    ];
+
+    // Style Sheet 2
+    for (let c = 0; c < detailsHeaders.length; c++) {
+      const ref = XLSX.utils.encode_cell({ r: 0, c });
+      if (wsDetails[ref]) wsDetails[ref].s = headerStyle;
+    }
+
+    const detailsAlignments = [
+      "center", // 0: Journey Number
+      "center", // 1: Journey ID
+      "center", // 2: Date
+      "left", // 3: Rice Mill
+      "left", // 4: Farmer Name
+      "left", // 5: Kayidha
+      "right", // 6: Mode (KG)
+      "right", // 7: Bags
+      "right", // 8: Above KG
+      "right", // 9: Value
+      "right", // 10: Total KG
+      "right", // 11: Net Katas
+      "right", // 12: Farmer Amount (₹)
+    ];
+
+    for (let rIdx = 1; rIdx < detailsData.length; rIdx++) {
+      const isEven = rIdx % 2 === 0;
+      for (let c = 0; c < detailsHeaders.length; c++) {
+        const ref = XLSX.utils.encode_cell({ r: rIdx, c });
+        if (wsDetails[ref]) {
+          wsDetails[ref].s = makeDataStyle(isEven, detailsAlignments[c]);
+        }
+      }
+      const modeRef = XLSX.utils.encode_cell({ r: rIdx, c: 6 });
+      const bagsRef = XLSX.utils.encode_cell({ r: rIdx, c: 7 });
+      const aboveKgRef = XLSX.utils.encode_cell({ r: rIdx, c: 8 });
+      const valRef = XLSX.utils.encode_cell({ r: rIdx, c: 9 });
+      const totKgRef = XLSX.utils.encode_cell({ r: rIdx, c: 10 });
+      const nkRef = XLSX.utils.encode_cell({ r: rIdx, c: 11 });
+      const amtRef = XLSX.utils.encode_cell({ r: rIdx, c: 12 });
+
+      if (wsDetails[modeRef]) wsDetails[modeRef].z = "#,##0";
+      if (wsDetails[bagsRef]) wsDetails[bagsRef].z = "#,##0";
+      if (wsDetails[aboveKgRef]) wsDetails[aboveKgRef].z = "#,##0.00";
+      if (wsDetails[valRef]) wsDetails[valRef].z = "#,##0.00";
+      if (wsDetails[totKgRef]) wsDetails[totKgRef].z = "#,##0.00";
+      if (wsDetails[nkRef]) wsDetails[nkRef].z = "#,##0.0000";
+      if (wsDetails[amtRef]) wsDetails[amtRef].z = '"₹"#,##0.00';
+    }
+
+    // Auto-filter and freeze pane for Sheet 2
+    if (detailsData.length > 1) {
+      wsDetails["!autofilter"] = {
+        ref: XLSX.utils.encode_range({
+          s: { r: 0, c: 0 },
+          e: { r: detailsData.length - 1, c: detailsHeaders.length - 1 },
+        }),
+      };
+    }
+    wsDetails["!views"] = [
+      { state: "frozen", xSplit: 0, ySplit: 1, topLeftCell: "A2", activeCell: "A2" },
+    ];
+
+    // --- CREATE TWO-SHEET WORKBOOK ---
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Paddy Summary");
+    XLSX.utils.book_append_sheet(wb, wsDetails, "Farmer Details");
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    const fileName = `Paddy_Journeys_${yyyy}-${mm}-${dd}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    toast.success(
+      `Exported ${filteredJourneys.length} journey(s) (${totalFarmerRows} farmer record(s)) to Excel.`,
+    );
+  }, [
+    filteredJourneys,
+    farmerMap,
+    workerNames,
+    filterFarmerId,
+    filterKayidhaName,
+  ]);
 
   return (
     <div className="p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-full space-y-6">
-        <div className="rounded-2xl border border-zinc-400/75 bg-white/90 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-8">
-          <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-            VIEW PADDY — JOURNEYS
-          </h2>
-          <p className="mt-2 text-sm text-zinc-600">
-            One row per saved journey with full details. Filter by date range,
-            rice mill, or search farmer / kayidha by name.
-          </p>
+        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-400/75 bg-white/90 p-6 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
+              VIEW PADDY — JOURNEYS
+            </h2>
+            <p className="mt-2 text-sm text-zinc-600">
+              One row per saved journey with full details. Filter by date range,
+              rice mill, or search farmer / kayidha by name.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-700/30 bg-[#107C41] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/10 transition-all hover:bg-[#0b5a2f] hover:shadow-lg active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#107C41]/40 sm:self-center"
+            title="Export displayed journeys to Excel"
+            aria-label="Export displayed journeys to Excel"
+          >
+            <FileSpreadsheet className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>Export Excel</span>
+          </button>
         </div>
 
         {loadError && (
