@@ -17,11 +17,23 @@ import { db } from "./firebase";
 import { uploadPdfToCloudinary } from "./cloudinaryUpload";
 import { formatRupees } from "./formatRupees";
 
-/** Used when `config/truck_sheet` is missing or has no valid `quintalRate` */
-const DEFAULT_QUINTAL_RATE = 2369;
 const PTR_REGEX = /^\d{16}$/;
 const MAX_ACCOUNTS = 50;
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
+
+const GRADE_OPTIONS = ["COMMON", "GRADE A"];
+
+function getGradeRate(gradeType, rates) {
+  if (!rates) return null;
+  const norm = String(gradeType || "").trim().toUpperCase();
+  const common = Number(rates.commonRate);
+  const gradeA = Number(rates.gradeARate);
+
+  if (norm.includes("GRADE A")) {
+    return Number.isFinite(gradeA) && gradeA > 0 ? gradeA : null;
+  }
+  return Number.isFinite(common) && common > 0 ? common : null;
+}
 
 function normalizeName(s) {
   return String(s || "")
@@ -220,7 +232,7 @@ function AddTruckSheet() {
   const [rsk, setRsk] = useState("");
   const [accountCount, setAccountCount] = useState(1);
   const [accountRows, setAccountRows] = useState([
-    { accountName: "", quintals: "", isCompleted: false },
+    { accountName: "", quintals: "", gradeType: "COMMON", isCompleted: false },
   ]);
   const [pdfFile, setPdfFile] = useState(null);
   const [existingPdfUrl, setExistingPdfUrl] = useState("");
@@ -242,8 +254,10 @@ function AddTruckSheet() {
   const [rskSearch, setRskSearch] = useState("");
   const [rskModalOpen, setRskModalOpen] = useState(false);
   const [newRskName, setNewRskName] = useState("");
-  /** Per-season rate from Firestore `config/truck_sheet` → `quintalRate` */
-  const [quintalRate, setQuintalRate] = useState(DEFAULT_QUINTAL_RATE);
+  /** Dynamic rates from Firestore `config/truck_sheet` */
+  const [rates, setRates] = useState(null);
+  const [ratesLoading, setRatesLoading] = useState(true);
+  const [ratesError, setRatesError] = useState(null);
 
   useEffect(() => {
     const unV = onSnapshot(
@@ -297,16 +311,50 @@ function AddTruckSheet() {
 
   useEffect(() => {
     const ref = doc(db, "config", "truck_sheet");
+    setRatesLoading(true);
     const unsub = onSnapshot(
       ref,
       (snap) => {
-        const raw = snap.data()?.quintalRate;
-        const n = Number(raw);
-        setQuintalRate(
-          Number.isFinite(n) && n > 0 ? n : DEFAULT_QUINTAL_RATE,
-        );
+        if (!snap.exists()) {
+          setRates(null);
+          setRatesError(
+            "Configuration document config/truck_sheet does not exist in Firebase.",
+          );
+          setRatesLoading(false);
+          return;
+        }
+        const data = snap.data() || {};
+        // Read commonRate (prefer commonRate, allow quintalRate as temporary legacy fallback if commonRate is not yet set)
+        const cVal =
+          data.commonRate != null ? data.commonRate : data.quintalRate;
+        const c = Number(cVal);
+        const g = Number(data.gradeARate);
+
+        const validCommon = Number.isFinite(c) && c > 0 ? c : null;
+        const validGradeA = Number.isFinite(g) && g > 0 ? g : null;
+
+        if (!validCommon || !validGradeA) {
+          setRates(null);
+          setRatesError(
+            `Invalid or missing rate in config/truck_sheet (commonRate: ${data.commonRate ?? data.quintalRate}, gradeARate: ${data.gradeARate}). Please set positive rates in Firebase.`,
+          );
+        } else {
+          setRates({
+            commonRate: validCommon,
+            gradeARate: validGradeA,
+          });
+          setRatesError(null);
+        }
+        setRatesLoading(false);
       },
-      () => setQuintalRate(DEFAULT_QUINTAL_RATE),
+      (err) => {
+        console.error("Failed to load config/truck_sheet rates:", err);
+        setRates(null);
+        setRatesError(
+          "Unable to load rates from Firebase. Please check your network or Firestore permissions.",
+        );
+        setRatesLoading(false);
+      },
     );
     return () => unsub();
   }, []);
@@ -375,6 +423,8 @@ function AddTruckSheet() {
               acc[i]?.quintals != null && acc[i].quintals !== ""
                 ? String(acc[i].quintals)
                 : "",
+            gradeType:
+              acc[i]?.gradeType === "GRADE A" ? "GRADE A" : "COMMON",
             isCompleted: Boolean(acc[i]?.isCompleted),
           })),
         );
@@ -402,7 +452,12 @@ function AddTruckSheet() {
     setAccountRows((prev) => {
       const next = prev.slice(0, n);
       while (next.length < n) {
-        next.push({ accountName: "", quintals: "", isCompleted: false });
+        next.push({
+          accountName: "",
+          quintals: "",
+          gradeType: "COMMON",
+          isCompleted: false,
+        });
       }
       return next;
     });
@@ -452,10 +507,18 @@ function AddTruckSheet() {
     return sum;
   }, [accountRows]);
 
-  const amount = useMemo(
-    () => Math.round(netQuintals * quintalRate * 100) / 100,
-    [netQuintals, quintalRate],
-  );
+  const amount = useMemo(() => {
+    if (!rates) return 0;
+    let sum = 0;
+    for (const row of accountRows) {
+      const q = row.quintals === "" ? NaN : Number(row.quintals);
+      if (Number.isFinite(q) && q >= 0) {
+        const rate = getGradeRate(row.gradeType, rates);
+        if (rate != null) sum += q * rate;
+      }
+    }
+    return Math.round(sum * 100) / 100;
+  }, [accountRows, rates]);
 
   const createVehicle = async (e) => {
     e.preventDefault();
@@ -507,6 +570,10 @@ function AddTruckSheet() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setPtrTouched(true);
+    if (!rates || !rates.commonRate || !rates.gradeARate) {
+      alert("Cannot save: Valid rates for COMMON and GRADE A have not loaded from Firebase config/truck_sheet.");
+      return;
+    }
     const riceMillName =
       riceMills.find((m) => m.id === millId)?.name?.trim() ?? "";
     const vehicleNo =
@@ -540,7 +607,8 @@ function AddTruckSheet() {
         alert(`Enter valid quintals (≥ 0) for account “${name}”.`);
         return;
       }
-      const accEntry = { accountName: name, quintals: qRaw };
+      const gradeType = row.gradeType === "GRADE A" ? "GRADE A" : "COMMON";
+      const accEntry = { accountName: name, quintals: qRaw, gradeType };
       if (isEditMode) accEntry.isCompleted = Boolean(row.isCompleted);
       accountsPayload.push(accEntry);
     }
@@ -575,7 +643,9 @@ function AddTruckSheet() {
         accounts: accountsPayload,
         netQuintals,
         amount,
-        ratePerQuintal: quintalRate,
+        ratePerQuintal: rates.commonRate,
+        commonRate: rates.commonRate,
+        gradeARate: rates.gradeARate,
       };
 
       if (!isEditMode) {
@@ -642,8 +712,14 @@ function AddTruckSheet() {
               </h2>
               <p className="mt-2 text-sm text-zinc-600">
                 S. no. is assigned automatically when you save. PTR no. is a
-                unique 16-digit number. Amount = net quintals × the rate per
-                quintal from the database (see Amount below).
+                unique 16-digit number. Amount is calculated per account line based on Grade type
+                {rates ? (
+                  <> (GRADE A × ₹{rates.gradeARate.toLocaleString("en-IN")}, COMMON × ₹{rates.commonRate.toLocaleString("en-IN")}).</>
+                ) : ratesLoading ? (
+                  <> (loading rates from Firebase…).</>
+                ) : (
+                  <> (rates unavailable from Firebase).</>
+                )}
               </p>
               {isEditMode && existingSerialNo != null && (
                 <p className="mt-1 text-sm font-medium text-emerald-800">
@@ -661,6 +737,12 @@ function AddTruckSheet() {
             )}
           </div>
         </div>
+
+        {ratesError && (
+          <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+            ⚠ {ratesError} Saving is disabled until valid rates are loaded from Firebase.
+          </div>
+        )}
 
         {loadError && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -797,14 +879,15 @@ function AddTruckSheet() {
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-emerald-100">
-            <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+            <table className="w-full min-w-[580px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-[#245840] bg-[#2D6A4F] text-xs font-bold uppercase tracking-wider text-white">
-                  <th className="rounded-tl-xl border-r border-[#467C64] px-3 py-2">#</th>
+                  <th className="w-12 rounded-tl-xl border-r border-[#467C64] px-3 py-2 text-center">#</th>
                   <th className="border-r border-[#467C64] px-3 py-2">Account name</th>
-                  <th className={`px-3 py-2 ${isEditMode ? "border-r border-[#467C64]" : "rounded-tr-xl"}`}>Quintals</th>
+                  <th className="w-36 border-r border-[#467C64] px-3 py-2">Quintals</th>
+                  <th className={`w-36 px-3 py-2 ${isEditMode ? "border-r border-[#467C64]" : "rounded-tr-xl"}`}>Grade type</th>
                   {isEditMode && (
-                    <th className="rounded-tr-xl px-3 py-2 text-center whitespace-nowrap">
+                    <th className="w-24 rounded-tr-xl px-3 py-2 text-center whitespace-nowrap">
                       Completed
                     </th>
                   )}
@@ -820,7 +903,7 @@ function AddTruckSheet() {
                         : "border-b border-emerald-50"
                     }
                   >
-                    <td className="px-3 py-2 text-zinc-500">{i + 1}</td>
+                    <td className="px-3 py-2 text-center font-medium text-zinc-500">{i + 1}</td>
                     <td className="px-3 py-2">
                       <input
                         type="text"
@@ -852,9 +935,26 @@ function AddTruckSheet() {
                             return next;
                           });
                         }}
-                        className="w-full min-w-24 rounded-lg border border-emerald-100 px-2 py-2"
+                        className="w-full min-w-24 rounded-lg border border-emerald-100 px-2 py-2 font-mono"
                         placeholder="0"
                       />
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={row.gradeType || "COMMON"}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setAccountRows((prev) => {
+                            const next = [...prev];
+                            next[i] = { ...next[i], gradeType: v };
+                            return next;
+                          });
+                        }}
+                        className="w-full min-w-28 rounded-lg border border-emerald-100 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-800 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
+                      >
+                        <option value="COMMON">COMMON</option>
+                        <option value="GRADE A">GRADE A</option>
+                      </select>
                     </td>
                     {isEditMode && (
                       <td className="px-3 py-2 text-center align-middle">
@@ -891,10 +991,19 @@ function AddTruckSheet() {
             </div>
             <div>
               <p className="text-xs font-medium uppercase text-emerald-800">
-                Amount (× {quintalRate})
+                Total Amount
               </p>
               <p className="text-lg font-semibold text-emerald-900">
-                {formatRupees(amount)}
+                {rates ? formatRupees(amount) : ratesLoading ? "Loading rates…" : "—"}
+              </p>
+              <p className="mt-0.5 text-[0.7rem] text-zinc-500">
+                {rates ? (
+                  `Grade A: ₹${rates.gradeARate.toLocaleString("en-IN")}/Qtl · Common: ₹${rates.commonRate.toLocaleString("en-IN")}/Qtl`
+                ) : ratesLoading ? (
+                  "Loading rates from Firebase…"
+                ) : (
+                  <span className="text-red-600">Rates unavailable from Firebase</span>
+                )}
               </p>
             </div>
           </div>
@@ -932,14 +1041,16 @@ function AddTruckSheet() {
 
           <button
             type="submit"
-            disabled={saving || formBlocked}
+            disabled={saving || formBlocked || ratesLoading || !rates || Boolean(ratesError)}
             className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 disabled:opacity-50"
           >
             {saving
               ? "Saving…"
-              : isEditMode
-                ? "Update truck sheet"
-                : "Save truck sheet"}
+              : ratesLoading
+                ? "Loading rates…"
+                : isEditMode
+                  ? "Update truck sheet"
+                  : "Save truck sheet"}
           </button>
         </form>
       </div>

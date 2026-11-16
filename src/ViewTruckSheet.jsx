@@ -32,19 +32,61 @@ function formatDateDisplay(dateStr) {
   return s;
 }
 
-/** Matches AddTruckSheet when `config/truck_sheet` is missing or invalid */
-const DEFAULT_QUINTAL_RATE = 2369;
+function getGradeRate(gradeType, rates) {
+  if (!rates) return null;
+  const norm = String(gradeType || "").trim().toUpperCase();
+  const common = Number(
+    rates.commonRate != null ? rates.commonRate : rates.ratePerQuintal,
+  );
+  const gradeA = Number(rates.gradeARate);
+
+  if (norm.includes("GRADE A")) {
+    return Number.isFinite(gradeA) && gradeA > 0 ? gradeA : null;
+  }
+  return Number.isFinite(common) && common > 0 ? common : null;
+}
 
 const ACCOUNTS_SUB_WRAP =
-  "w-full min-w-[380px] overflow-x-auto rounded-lg border border-zinc-300 bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.1)]";
+  "w-full min-w-[420px] overflow-x-auto rounded-lg border border-zinc-300 bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.1)]";
 const ACCOUNTS_SUB_TABLE =
-  "w-full min-w-[380px] table-fixed border-collapse text-left text-[0.7rem] text-zinc-800";
+  "w-full min-w-[420px] table-fixed border-collapse text-left text-[0.7rem] text-zinc-800";
 
-function accountLineAmount(quintals, quintalRate) {
+function accountLineAmount(quintals, rates, gradeType) {
   const q = Number(quintals);
-  const r = Number(quintalRate);
-  if (!Number.isFinite(q) || !Number.isFinite(r) || r <= 0) return null;
-  return Math.round(q * r * 100) / 100;
+  if (!Number.isFinite(q) || q < 0) return null;
+  const rate = getGradeRate(gradeType, rates);
+  if (rate == null) return null;
+  return Math.round(q * rate * 100) / 100;
+}
+
+function getSheetTotalAmount(sheet, currentRates) {
+  const activeRates =
+    currentRates || {
+      commonRate: sheet?.commonRate || sheet?.ratePerQuintal,
+      gradeARate: sheet?.gradeARate,
+      ratePerQuintal: sheet?.ratePerQuintal || sheet?.commonRate,
+    };
+
+  const accounts = Array.isArray(sheet?.accounts) ? sheet.accounts : [];
+  if (accounts.length > 0 && activeRates) {
+    let sum = 0;
+    let hasValidLine = false;
+    for (const a of accounts) {
+      const lineAmt = accountLineAmount(a.quintals, activeRates, a.gradeType);
+      if (lineAmt != null) {
+        sum += lineAmt;
+        hasValidLine = true;
+      }
+    }
+    if (hasValidLine) {
+      return Math.round(sum * 100) / 100;
+    }
+  }
+
+  if (sheet?.amount != null && Number.isFinite(Number(sheet.amount))) {
+    return Number(sheet.amount);
+  }
+  return null;
 }
 
 /** Trim + uppercase so "Kundlachandrarao" and "kundlachandrarao" match. */
@@ -69,7 +111,7 @@ function accountsForDisplay(accounts, accountFilterUpper) {
   );
 }
 
-function AccountsNestedTable({ accounts, quintalRate }) {
+function AccountsNestedTable({ accounts, rates }) {
   const rows = Array.isArray(accounts) ? accounts : [];
   if (rows.length === 0) {
     return <span className="text-zinc-400">—</span>;
@@ -79,13 +121,14 @@ function AccountsNestedTable({ accounts, quintalRate }) {
       <table className={ACCOUNTS_SUB_TABLE}>
         <thead>
           <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.6rem] font-bold uppercase tracking-wider text-white">
-            <th className="w-[10%] border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Line</th>
+            <th className="w-[8%] border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Line</th>
             <th className="border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Account name</th>
-            <th className="w-[18%] border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Quintals</th>
-            <th className="w-[22%] border-r border-[#467C64] px-2 py-2 whitespace-nowrap text-right font-bold">
+            <th className="w-[16%] border-r border-[#467C64] px-2 py-2 whitespace-nowrap">Quintals</th>
+            <th className="w-[18%] border-r border-[#467C64] px-2 py-2 whitespace-nowrap text-center">Grade type</th>
+            <th className="w-[20%] border-r border-[#467C64] px-2 py-2 whitespace-nowrap text-right font-bold">
               Amount (₹)
             </th>
-            <th className="w-[12%] px-2 py-2 whitespace-nowrap text-center">
+            <th className="w-[10%] px-2 py-2 whitespace-nowrap text-center">
               Done
             </th>
           </tr>
@@ -93,7 +136,8 @@ function AccountsNestedTable({ accounts, quintalRate }) {
         <tbody>
           {rows.map((a, idx) => {
             const done = Boolean(a.isCompleted);
-            const lineAmt = accountLineAmount(a.quintals, quintalRate);
+            const lineAmt = accountLineAmount(a.quintals, rates, a.gradeType);
+            const grade = a.gradeType === "GRADE A" ? "GRADE A" : (a.gradeType || "COMMON");
             return (
               <tr
                 key={idx}
@@ -113,6 +157,17 @@ function AccountsNestedTable({ accounts, quintalRate }) {
                   {a.quintals != null && Number.isFinite(Number(a.quintals))
                     ? Number(a.quintals).toFixed(4)
                     : "—"}
+                </td>
+                <td className="border-r border-zinc-200 px-2 py-2 text-center whitespace-nowrap">
+                  <span
+                    className={
+                      grade === "GRADE A"
+                        ? "inline-block rounded px-1.5 py-0.5 text-[0.62rem] font-bold tracking-wide bg-amber-100 text-amber-900 border border-amber-300/80"
+                        : "inline-block rounded px-1.5 py-0.5 text-[0.62rem] font-semibold tracking-wide bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    }
+                  >
+                    {grade}
+                  </span>
                 </td>
                 <td className="border-r border-zinc-200 px-2 py-2 text-right font-mono tabular-nums font-extrabold text-blue-600">
                   {lineAmt != null ? formatRupees(lineAmt) : "—"}
@@ -142,20 +197,29 @@ function ViewTruckSheet() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
   const [pdfViewer, setPdfViewer] = useState(null);
-  const [quintalRate, setQuintalRate] = useState(DEFAULT_QUINTAL_RATE);
+  const [rates, setRates] = useState(null);
 
   useEffect(() => {
     const ref = doc(db, "config", "truck_sheet");
     const unsub = onSnapshot(
       ref,
       (snap) => {
-        const raw = snap.data()?.quintalRate;
-        const n = Number(raw);
-        setQuintalRate(
-          Number.isFinite(n) && n > 0 ? n : DEFAULT_QUINTAL_RATE,
-        );
+        if (!snap.exists()) {
+          setRates(null);
+          return;
+        }
+        const data = snap.data() || {};
+        const cVal =
+          data.commonRate != null ? data.commonRate : data.quintalRate;
+        const c = Number(cVal);
+        const g = Number(data.gradeARate);
+        if (Number.isFinite(c) && c > 0 && Number.isFinite(g) && g > 0) {
+          setRates({ commonRate: c, gradeARate: g });
+        } else {
+          setRates(null);
+        }
       },
-      () => setQuintalRate(DEFAULT_QUINTAL_RATE),
+      () => setRates(null),
     );
     return () => unsub();
   }, []);
@@ -260,11 +324,11 @@ function ViewTruckSheet() {
     for (const s of filteredSheets) {
       const q = s.netQuintals;
       if (q != null && Number.isFinite(Number(q))) totalQuintals += Number(q);
-      const amt = s.amount;
+      const amt = getSheetTotalAmount(s, rates);
       if (amt != null && Number.isFinite(Number(amt))) totalAmount += Number(amt);
     }
     return { totalQuintals, totalAmount };
-  }, [filteredSheets, filterMill, filterRsk]);
+  }, [filteredSheets, filterMill, filterRsk, rates]);
 
   const dateRangeFilterActive = Boolean(filterDateFrom || filterDateTo);
   const anyFilterActive = Boolean(
@@ -373,9 +437,9 @@ function ViewTruckSheet() {
             : String(s.serialNo)
           : idx + 1;
       const qtl = Number(s.netQuintals);
-      const amt = Number(s.amount);
+      const amt = getSheetTotalAmount(s, rates);
       const validQtl = Number.isFinite(qtl) ? qtl : 0;
-      const validAmt = Number.isFinite(amt) ? amt : 0;
+      const validAmt = amt != null && Number.isFinite(amt) ? amt : 0;
 
       sumNetQtl += validQtl;
       sumAmount += validAmt;
@@ -384,7 +448,7 @@ function ViewTruckSheet() {
       const accountsSummary = accList
         .map(
           (a) =>
-            `${normalizeAccountKey(a.accountName) || "Account"}: ${Number(a.quintals || 0).toFixed(2)} Qtl`,
+            `${normalizeAccountKey(a.accountName) || "Account"}: ${Number(a.quintals || 0).toFixed(2)} Qtl (${a.gradeType || "COMMON"})`,
         )
         .join("; ");
 
@@ -479,7 +543,7 @@ function ViewTruckSheet() {
 
     XLSX.writeFile(wb, fileName);
     toast.success(`Exported ${filteredSheets.length} truck sheet(s) to Excel.`);
-  }, [filteredSheets, filterAccountName]);
+  }, [filteredSheets, filterAccountName, rates]);
 
   return (
     <div className="p-5 sm:p-8 lg:p-10">
@@ -493,6 +557,11 @@ function ViewTruckSheet() {
               Filter by date range, mill, RSK, or account name (accounts column
               shows only that name). Open PDFs, edit, or delete (password
               required).
+              {rates && (
+                <span className="mt-1 block text-xs font-semibold text-emerald-800">
+                  Active rates: Common: ₹{rates.commonRate.toLocaleString("en-IN")}/Qtl · Grade A: ₹{rates.gradeARate.toLocaleString("en-IN")}/Qtl
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -622,7 +691,7 @@ function ViewTruckSheet() {
         </div>
 
         <div className="overflow-x-auto rounded-2xl border border-zinc-400/75 bg-white shadow-[0_10px_28px_-6px_rgba(15,23,42,0.16),0_4px_10px_-2px_rgba(15,23,42,0.08)]">
-          <table className="w-full min-w-[1360px] border-collapse text-left text-xs text-zinc-800">
+          <table className="w-full min-w-[1400px] border-collapse text-left text-xs text-zinc-800">
             <thead>
               <tr className="border-b border-[#245840] bg-[#2D6A4F] text-[0.65rem] font-bold uppercase tracking-wider text-white">
                 <th className="sticky left-0 z-10 rounded-tl-xl border-r border-[#467C64] bg-[#2D6A4F] px-2 py-3 text-white shadow-[1px_0_0_0_#467C64]">
@@ -646,7 +715,7 @@ function ViewTruckSheet() {
                 <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
                   RSK
                 </th>
-                <th className="min-w-[380px] border-r border-[#467C64] px-2 py-3">
+                <th className="min-w-[420px] border-r border-[#467C64] px-2 py-3">
                   Accounts
                 </th>
                 <th className="border-r border-[#467C64] px-2 py-3 whitespace-nowrap">
@@ -700,13 +769,19 @@ function ViewTruckSheet() {
                     <td className="border-r border-zinc-200 max-w-28 truncate px-2 py-3" title={s.rsk}>
                       {s.rsk ?? "—"}
                     </td>
-                    <td className="border-r border-zinc-200 min-w-[380px] px-2 py-3 align-top">
+                    <td className="border-r border-zinc-200 min-w-[420px] px-2 py-3 align-top">
                       <AccountsNestedTable
                         accounts={accountsForDisplay(
                           s.accounts,
                           filterAccountName,
                         )}
-                        quintalRate={quintalRate}
+                        rates={
+                          rates || {
+                            commonRate: s.commonRate || s.ratePerQuintal,
+                            gradeARate: s.gradeARate,
+                            ratePerQuintal: s.ratePerQuintal || s.commonRate,
+                          }
+                        }
                       />
                     </td>
                     <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-mono font-semibold">
@@ -715,7 +790,9 @@ function ViewTruckSheet() {
                         : "—"}
                     </td>
                     <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-extrabold text-blue-600">
-                      {s.amount != null ? formatRupees(s.amount) : "—"}
+                      {getSheetTotalAmount(s, rates) != null
+                        ? formatRupees(getSheetTotalAmount(s, rates))
+                        : "—"}
                     </td>
                     <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 text-center">
                       {s.pdfUrl ? (
