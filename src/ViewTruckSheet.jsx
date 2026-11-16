@@ -59,6 +59,36 @@ function accountLineAmount(quintals, rates, gradeType) {
   return Math.round(q * rate * 100) / 100;
 }
 
+function getSheetTotalAmount(sheet, currentRates) {
+  const activeRates =
+    currentRates || {
+      commonRate: sheet?.commonRate || sheet?.ratePerQuintal,
+      gradeARate: sheet?.gradeARate,
+      ratePerQuintal: sheet?.ratePerQuintal || sheet?.commonRate,
+    };
+
+  const accounts = Array.isArray(sheet?.accounts) ? sheet.accounts : [];
+  if (accounts.length > 0 && activeRates) {
+    let sum = 0;
+    let hasValidLine = false;
+    for (const a of accounts) {
+      const lineAmt = accountLineAmount(a.quintals, activeRates, a.gradeType);
+      if (lineAmt != null) {
+        sum += lineAmt;
+        hasValidLine = true;
+      }
+    }
+    if (hasValidLine) {
+      return Math.round(sum * 100) / 100;
+    }
+  }
+
+  if (sheet?.amount != null && Number.isFinite(Number(sheet.amount))) {
+    return Number(sheet.amount);
+  }
+  return null;
+}
+
 /** Trim + uppercase so "Kundlachandrarao" and "kundlachandrarao" match. */
 function normalizeAccountKey(name) {
   return String(name ?? "").trim().toUpperCase();
@@ -294,11 +324,11 @@ function ViewTruckSheet() {
     for (const s of filteredSheets) {
       const q = s.netQuintals;
       if (q != null && Number.isFinite(Number(q))) totalQuintals += Number(q);
-      const amt = s.amount;
+      const amt = getSheetTotalAmount(s, rates);
       if (amt != null && Number.isFinite(Number(amt))) totalAmount += Number(amt);
     }
     return { totalQuintals, totalAmount };
-  }, [filteredSheets, filterMill, filterRsk]);
+  }, [filteredSheets, filterMill, filterRsk, rates]);
 
   const dateRangeFilterActive = Boolean(filterDateFrom || filterDateTo);
   const anyFilterActive = Boolean(
@@ -407,9 +437,9 @@ function ViewTruckSheet() {
             : String(s.serialNo)
           : idx + 1;
       const qtl = Number(s.netQuintals);
-      const amt = Number(s.amount);
+      const amt = getSheetTotalAmount(s, rates);
       const validQtl = Number.isFinite(qtl) ? qtl : 0;
-      const validAmt = Number.isFinite(amt) ? amt : 0;
+      const validAmt = amt != null && Number.isFinite(amt) ? amt : 0;
 
       sumNetQtl += validQtl;
       sumAmount += validAmt;
@@ -513,7 +543,7 @@ function ViewTruckSheet() {
 
     XLSX.writeFile(wb, fileName);
     toast.success(`Exported ${filteredSheets.length} truck sheet(s) to Excel.`);
-  }, [filteredSheets, filterAccountName]);
+  }, [filteredSheets, filterAccountName, rates]);
 
   return (
     <div className="p-5 sm:p-8 lg:p-10">
@@ -527,6 +557,11 @@ function ViewTruckSheet() {
               Filter by date range, mill, RSK, or account name (accounts column
               shows only that name). Open PDFs, edit, or delete (password
               required).
+              {rates && (
+                <span className="mt-1 block text-xs font-semibold text-emerald-800">
+                  Active rates: Common: ₹{rates.commonRate.toLocaleString("en-IN")}/Qtl · Grade A: ₹{rates.gradeARate.toLocaleString("en-IN")}/Qtl
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -740,18 +775,13 @@ function ViewTruckSheet() {
                           s.accounts,
                           filterAccountName,
                         )}
-                        rates={{
-                          commonRate:
-                            s.commonRate ||
-                            s.ratePerQuintal ||
-                            (rates ? rates.commonRate : null),
-                          gradeARate:
-                            s.gradeARate || (rates ? rates.gradeARate : null),
-                          ratePerQuintal:
-                            s.ratePerQuintal ||
-                            s.commonRate ||
-                            (rates ? rates.commonRate : null),
-                        }}
+                        rates={
+                          rates || {
+                            commonRate: s.commonRate || s.ratePerQuintal,
+                            gradeARate: s.gradeARate,
+                            ratePerQuintal: s.ratePerQuintal || s.commonRate,
+                          }
+                        }
                       />
                     </td>
                     <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-mono font-semibold">
@@ -760,7 +790,9 @@ function ViewTruckSheet() {
                         : "—"}
                     </td>
                     <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 font-extrabold text-blue-600">
-                      {s.amount != null ? formatRupees(s.amount) : "—"}
+                      {getSheetTotalAmount(s, rates) != null
+                        ? formatRupees(getSheetTotalAmount(s, rates))
+                        : "—"}
                     </td>
                     <td className="border-r border-zinc-200 whitespace-nowrap px-2 py-3 text-center">
                       {s.pdfUrl ? (
