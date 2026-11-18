@@ -11,10 +11,13 @@ import ViewKayidhaPaddy from "./ViewKayidhaPaddy";
 import CalculateKayidha from "./CalculateKayidha";
 import AddTruckSheet from "./AddTruckSheet";
 import ViewTruckSheet from "./ViewTruckSheet";
+import ViewFto from "./ViewFto";
 import AddDriverData from "./AddDriverData";
 import ViewDriverData from "./ViewDriverData";
 import ViewWorkersData from "./ViewWorkersData";
 import WorkersPay from "./WorkersPay";
+import AddFarmerAadhaar from "./AddFarmerAadhaar";
+import ViewFarmerAadhaar from "./ViewFarmerAadhaar";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -42,11 +45,15 @@ function App() {
         <Route path="truck-sheet/add" element={<AddTruckSheet />} />
         <Route path="truck-sheet/edit/:sheetId" element={<AddTruckSheet />} />
         <Route path="truck-sheet/view" element={<ViewTruckSheet />} />
+        <Route path="fto/view" element={<ViewFto />} />
         <Route path="drivers/add" element={<AddDriverData />} />
         <Route path="drivers/edit/:recordId" element={<AddDriverData />} />
         <Route path="drivers/view" element={<ViewDriverData />} />
         <Route path="workers/view" element={<ViewWorkersData />} />
         <Route path="workers/pay" element={<WorkersPay />} />
+        <Route path="farmer-aadhaar/add" element={<AddFarmerAadhaar />} />
+        <Route path="farmer-aadhaar/edit/:id" element={<AddFarmerAadhaar />} />
+        <Route path="farmer-aadhaar/view" element={<ViewFarmerAadhaar />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
